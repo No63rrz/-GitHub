@@ -24,12 +24,16 @@
 //フォント
 #define FONT_TANU_PATH TEXT(".\\FONT\\TanukiMagic.ttf")
 #define FONT_TANU_NAME TEXT("たぬき油性マジック")
-
-//エラーメッセージ
+//フォントエラー
 #define FONT_INSTALL_ERR_TITLE TEXT("フォントインストールエラー")
 #define FONT_CREATE_ERR_TITLE TEXT("フォント作成エラー")
 
+#define IMAGE_TITLE_ROGO_PATH TEXT(".\\IMAGE\\ROGO.png")
 #define IMAGE_LOAD_ERR_TITLE TEXT("画像読み込みエラー")
+
+#define MUSIC_TITLE_BGM_PATH TEXT(".\\MUSIC\\loop33.wav")
+#define MUSIC_PLAY_BGM_PATH TEXT(".\\MUSIC\\fruitsparfait.mp3")
+#define MUSIC_END_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3")
 
 #define MUSIC_LOAD_ERR_TITLE TEXT("音楽読み込みエラー")
 
@@ -37,10 +41,6 @@
 #define MSG_CLOSE_TITLE TEXT("終了メッセージ")
 #define MSG_CLOSE_CAPTION TEXT("ゲームを終了しますか？")
 
-//MOVIEフォルダと、mp4ファイルも、追加して下さい
-//#define MOVIE_PATH			".\\MOVIE\\neko.mp4"	//動画のパス
-//
-//int handle = -1;	//動画のハンドル
 
 enum GAME_SCENE {
 	GAME_SCENE_START,
@@ -121,6 +121,14 @@ int GameScene; //ゲームシーンを管理
 
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
+
+//タイトル画面
+IMAGE ImageTitleROGO;
+
+//音楽関係
+MUSIC TITLE;
+MUSIC PLAY_BGM;
+MUSIC END_BGM;
 
 //########## プロトタイプ宣言 ##########
 VOID MY_FPS_UPDATE(VOID);
@@ -230,23 +238,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ScreenFlip();
 
 		MY_FPS_WAIT();
-
-		//if (GetMovieStateToGraph(handle) == 0)
-		//{
-		//	SeekMovieToGraph(handle, 0);	//動画の再生バーを最初からにする
-		//	PlayMovieToGraph(handle);		//動画を再生状態にする
-		//}
-
-		////タイトル動画描画
-		////DrawGraph(0, 0, handle, FALSE);
-
-		////動画が切れないようにしたい！
-		//DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, handle, FALSE);
-
-		//DrawString(0, 0, "動画を再生しています・・・", GetColor(255, 255, 255));
-		//DrawString(0, 20, "猫の動画", GetColor(255, 255, 255)); //動画の説明
-		//ScreenFlip();		//モニタのリフレッシュレートの速さで裏画面を再描画
-	}
 
 	MY_FONT_DERETE();
 	MY_FONT_UNINSTALL_ONCE();
@@ -551,6 +542,7 @@ VOID MY_DELETE_IMAGE(VOID)
 
 BOOL(MY_LOAD_MUSIC)(VOID)
 {
+	
 	return TRUE;
 }
 
