@@ -178,7 +178,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetWindowStyleMode(GAME_WINDOW_BAR);				//タイトルバーはデフォルトにする
 	SetMainWindowText(TEXT(GAME_WINDOW_NAME));			//ウィンドウのタイトルの文字
 	SetAlwaysRunFlag(TRUE);								//非アクティブでも実行する
-	SetWindowIconID(IDI_ICON1);
+	//SetWindowIconID(IDI_ICON1);
 	SetWindowUserCloseEnableFlag(FALSE);
 
 
@@ -456,8 +456,20 @@ VOID MY_START(VOID)
 
 VOID MY_START_PROC(VOID)
 {
+	//BGMが流れていないなら
+	if (CheckSoundMem(TITLE.handle) == 0)
+	{
+		ChangeVolumeSoundMem(255 * 50 / 100, TITLE.handle); //50%の音量
+		PlaySoundMem(TITLE.handle, DX_PLAYTYPE_LOOP); //ループ再生
+	}
 	if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 	{
+		//BGMが流れていたら
+		if (CheckSoundMem(TITLE.handle) != 0)
+		{
+			StopSoundMem(TITLE.handle); //止める
+		}
+
 		MY_PLAY_INIT(); //ゲーム初期化
 
 		GameScene = GAME_SCENE_PLAY; //プレイ画面に遷移
@@ -489,8 +501,18 @@ VOID MY_PLAY(VOID)
 
 VOID MY_PLAY_PROC(VOID)
 {
+	//BGMが流れていないなら
+	if (CheckSoundMem(PLAY_BGM.handle) == 0)
+	{
+		ChangeVolumeSoundMem(255 * 50 / 100, PLAY_BGM.handle); //50%の音量
+		PlaySoundMem(PLAY_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
+	}
 	if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
 	{
+		if (CheckSoundMem(PLAY_BGM.handle) != 0)
+		{
+			StopSoundMem(PLAY_BGM.handle);
+		}
 		GameScene = GAME_SCENE_END; //プレイ画面に遷移
 
 		return;
@@ -514,8 +536,17 @@ VOID MY_END(VOID)
 
 VOID MY_END_PROC(VOID)
 {
+	if (CheckSoundMem(END_BGM.handle) == 0)
+	{
+		ChangeVolumeSoundMem(255 * 50 / 100, END_BGM.handle); //50%の音量
+		PlaySoundMem(END_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
+	}
 	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
 	{
+		if (CheckSoundMem(END_BGM.handle) != 0)
+		{
+			StopSoundMem(END_BGM.handle);
+		}
 		GameScene = GAME_SCENE_START; //プレイ画面に遷移
 
 		return;
@@ -555,11 +586,36 @@ VOID MY_DELETE_IMAGE(VOID)
 
 BOOL(MY_LOAD_MUSIC)(VOID)
 {
-	
+	strcpy_s(TITLE.path, MUSIC_TITLE_BGM_PATH);
+	TITLE.handle = LoadSoundMem(TITLE.path);
+	if (TITLE.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_TITLE_BGM_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
+	strcpy_s(PLAY_BGM.path, MUSIC_PLAY_BGM_PATH);
+	PLAY_BGM.handle = LoadSoundMem(PLAY_BGM.path);
+	if (PLAY_BGM.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_PLAY_BGM_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
+	strcpy_s(END_BGM.path, MUSIC_END_BGM_PATH);
+	END_BGM.handle = LoadSoundMem(END_BGM.path);
+	if (END_BGM.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_END_BGM_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
 	return TRUE;
 }
 
 VOID MY_DELETE_MUSIC(VOID)
 {
+	DeleteSoundMem(TITLE.handle);
+	DeleteSoundMem(PLAY_BGM.handle); 
+	DeleteSoundMem(END_BGM.handle);
 	return;
 }

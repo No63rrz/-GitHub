@@ -157,11 +157,10 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="iconread.rc" />
-    <ResourceCompile Include="resource.rc" />
+    <Image Include="icon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="icon.ico" />
+    <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
