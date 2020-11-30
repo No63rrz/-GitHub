@@ -238,7 +238,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ScreenFlip();
 
 		MY_FPS_WAIT();
-
+	}
 	MY_FONT_DERETE();
 	MY_FONT_UNINSTALL_ONCE();
 	MY_DELETE_IMAGE();
@@ -470,7 +470,7 @@ VOID MY_START_PROC(VOID)
 VOID MY_START_DRAW(VOID)
 {
 	DrawString(0, 0, "スタート画面（エンターキーを押してください）", GetColor(255, 255, 255));
-
+	DrawGraph(ImageTitleROGO.x, ImageTitleROGO.y, ImageTitleROGO.handle, TRUE);
 	return;
 }
 
@@ -532,11 +532,24 @@ VOID MY_END_DRAW(VOID)
 
 BOOL MY_LOAD_IMAGE(VOID)
 {
+	strcpy_s(ImageTitleROGO.path, IMAGE_TITLE_ROGO_PATH);
+	ImageTitleROGO.handle = LoadGraph(ImageTitleROGO.path);
+	if (ImageTitleROGO.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), IMAGE_TITLE_ROGO_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(ImageTitleROGO.handle, &ImageTitleROGO.width, &ImageTitleROGO.height);
+
+	ImageTitleROGO.x = GAME_WIDTH / 2 - ImageTitleROGO.width / 2;
+	ImageTitleROGO.y = (GAME_HEIGHT / 2 - ImageTitleROGO.height / 2) - 50;
+
 	return TRUE;
 }
 
 VOID MY_DELETE_IMAGE(VOID)
 {
+	DeleteGraph(ImageTitleROGO.handle);
 	return;
 }
 
