@@ -31,11 +31,29 @@
 #define IMAGE_TITLE_ROGO_PATH TEXT(".\\IMAGE\\ROGO.png")
 #define IMAGE_LOAD_ERR_TITLE TEXT("画像読み込みエラー")
 
-#define MUSIC_TITLE_BGM_PATH TEXT(".\\MUSIC\\loop33.wav")
+#define MUSIC_TITLE_BGM_PATH TEXT(".\\MUSIC\\loop_33.wav")
 #define MUSIC_PLAY_BGM_PATH TEXT(".\\MUSIC\\fruitsparfait.mp3")
 #define MUSIC_END_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3")
 
 #define MUSIC_LOAD_ERR_TITLE TEXT("音楽読み込みエラー")
+
+//弾の設定
+#define TAMA_CHANGE_MAX		 5	//5フレーム目で弾の画像を変える
+#define TAMA_MAX			16	//最大16発まで
+
+//#define TAMA_RED_PATH			TEXT(".\\IMAGE\\TAMA\\red.png")		//赤弾の画像
+//#define TAMA_GREEN_PATH			TEXT(".\\IMAGE\\TAMA\\green.png")	//青弾の画像
+//#define TAMA_BLUE_PATH			TEXT(".\\IMAGE\\TAMA\\blue.png")	//緑弾の画像
+//#define TAMA_YELLOW_PATH		TEXT(".\\IMAGE\\TAMA\\yellow.png")	//黄弾の画像
+
+#define TAMA_DIV_WIDTH		16	//画像を分割する幅サイズ
+#define TAMA_DIV_HEIGHT		16	//画像を分割する高さサイズ
+
+#define TAMA_DIV_TATE		3	//画像を縦に分割する数
+#define TAMA_DIV_YOKO		1	//画像を横に分割する数
+
+#define TAMA_DIV_NUM	TAMA_DIV_TATE * TAMA_DIV_YOKO	//画像を分割する総数
+
 
 //閉じるボタンを押したとき
 #define MSG_CLOSE_TITLE TEXT("終了メッセージ")
@@ -93,11 +111,36 @@ typedef struct STRUCT_MUSIC
 	int handle;
 }MUSIC;
 
+typedef struct STRUCT_TAMA
+{
+	char path[PATH_MAX];
+	int handle[TAMA_DIV_NUM];
+	int x;
+	int y;
+	int width;
+	int height;
+	BOOL IsDraw;
+	int nowImageKind; //弾の現在の画像
+	int changeImageCnt;	//画像を変えるためのカウント
+	int changeImageCntMAX; //画像を変えるためのカウント(MAX)
+	int speed; //スピード
+}TAMA;	//弾の構造体
+
+
 typedef struct STRUCT_CHARA
 {
 	IMAGE image;
 	int speed;
+	//int CenterX;				//中心X
+	//int CenterY;				//中心Y
 
+	MUSIC musicShot;			//プレイヤーの発射音
+
+	BOOL CanShot;				//ショットできるか
+	int ShotReLoadCnt;			//ショットリロード時間
+	int ShotReLoadCntMAX;		//ショットリロード時間(MAX)
+
+	TAMA tama[TAMA_MAX];
 	RECT coll;
 	iPOINT collBeforePt;
 
@@ -122,13 +165,21 @@ int GameScene; //ゲームシーンを管理
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
 
-//タイトル画面
-IMAGE ImageTitleROGO;
+//画像関係
+IMAGE ImageTitleROGO; //タイトルロゴ
+IMAGE ImageTitleBack; //タイトル背景
+
+IMAGE ImagePlayBack; //プレイ背景
+
+IMAGE ImageEndBack; //エンド背景
 
 //音楽関係
 MUSIC TITLE;
 MUSIC PLAY_BGM;
 MUSIC END_BGM;
+
+//フォント
+FONT FontTanu32;
 
 //########## プロトタイプ宣言 ##########
 VOID MY_FPS_UPDATE(VOID);
@@ -423,26 +474,27 @@ VOID MY_FONT_UNINSTALL_ONCE(VOID)
 
 BOOL MY_FONT_CREATE(VOID)
 {
-	//strcpy_s(FontTanu32.path, sizeof(FontTanu32.path), FONT_TANU_PATH);
-	//strcpy_s(FontTanu32.name, sizeof(FontTanu32.name), FONT_TANU_NAME);
-	//FontTanu32.handle = -1;
-	//FontTanu32.size = 60;
-	//FontTanu32.bold = 1;
-	//FontTanu32.type = DX_FONTTYPE_ANTIALIASING_EDGE;
+	strcpy_s(FontTanu32.path, sizeof(FontTanu32.path), FONT_TANU_PATH);
+	strcpy_s(FontTanu32.name, sizeof(FontTanu32.name), FONT_TANU_NAME);
+	FontTanu32.handle = -1;
+	FontTanu32.size = 32;
+	FontTanu32.bold = 1;
+	FontTanu32.type = DX_FONTTYPE_ANTIALIASING_EDGE;
 
-	//FontTanu32.handle = CreateFontToHandle(FontTanu32.name, FontTanu32.size, FontTanu32.bold, FontTanu32.type);
-	//if (FontTanu32.handle == 1)
-	//{
-	//	MessageBox(GetMainWindowHandle(), FONT_TANU_NAME, FONT_CREATE_ERR_TITLE, MB_OK);
-	//	return FALSE;
+	FontTanu32.handle = CreateFontToHandle(FontTanu32.name, FontTanu32.size, FontTanu32.bold, FontTanu32.type);
+	if (FontTanu32.handle == 1)
+	{
+		MessageBox(GetMainWindowHandle(), FONT_TANU_NAME, FONT_CREATE_ERR_TITLE, MB_OK);
+		return FALSE;
 
-	//}
+	}
 	return TRUE;
 
 }
 
 VOID MY_FONT_DERETE(VOID)
 {
+	DeleteFontToHandle(FontTanu32.handle);
 	return;
 }
 
@@ -483,6 +535,9 @@ VOID MY_START_DRAW(VOID)
 {
 	DrawString(0, 0, "スタート画面（エンターキーを押してください）", GetColor(255, 255, 255));
 	DrawGraph(ImageTitleROGO.x, ImageTitleROGO.y, ImageTitleROGO.handle, TRUE);
+	
+	DrawStringToHandle(GAME_WIDTH/4, GAME_HEIGHT/2+50, "エンターキーをおしてね！", GetColor(255, 255, 255), FontTanu32.handle);
+
 	return;
 }
 
@@ -517,11 +572,104 @@ VOID MY_PLAY_PROC(VOID)
 
 		return;
 	}
+
+	//マウスの左ボタンをクリックしたとき
+	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
+	{
+		//弾の描画（仮）
+		//ショットが撃てるとき
+		//if (player.CanShot == TRUE)
+		//{
+		//	//ショット発射！！
+		//	PlaySoundMem(player.musicShot.handle, DX_PLAYTYPE_BACK);
+		//	player.CanShot = FALSE;
+
+		//	//空いているスロットで、弾の描画をする
+		//	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+		//	{
+		//		if (player.tama[cnt].IsDraw == FALSE)
+		//		{
+		//			//弾のX位置はプレイヤーの中心から発射
+		//			player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
+
+		//			//弾のY位置はプレイヤーの上部分から発射
+		//			player.tama[cnt].y = player.image.y;
+
+		//			//弾を描画する
+		//			player.tama[cnt].IsDraw = TRUE;
+
+		//			break;
+		//		}
+		//	}
+		//}
+	}
+
+	//ショットが撃てないとき
+	if (player.CanShot == FALSE)
+	{
+		//リロード時間が終わったとき
+		if (player.ShotReLoadCnt == player.ShotReLoadCntMAX)
+		{
+			player.ShotReLoadCnt = 0;
+			player.CanShot = TRUE;		//再びショットできる
+		}
+
+		player.ShotReLoadCnt++;	//リロードする
+	}
 	return;
 }
 
 VOID MY_PLAY_DRAW(VOID)
 {
+	DrawGraph(ImagePlayBack.x, ImagePlayBack.y, ImagePlayBack.handle, TRUE);
+	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE);
+
+	/*画面下から上に動くような描写。方向を変更するかもしれない*/
+	//弾の情報を生成
+	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+	{
+		//描画できる弾の処理
+		if (player.tama[cnt].IsDraw == TRUE)
+		{
+			//弾を描画する
+			DrawGraph(
+				player.tama[cnt].x,
+				player.tama[cnt].y,
+				player.tama[cnt].handle[player.tama[cnt].nowImageKind],	//現在の画像の種類にあったハンドル
+				TRUE);
+
+			//弾の表示フレームを増やす
+			if (player.tama[cnt].changeImageCnt < player.tama[cnt].changeImageCntMAX)
+			{
+				player.tama[cnt].changeImageCnt++;
+			}
+			else
+			{
+				//現在表示している弾の種類が、まだあるとき
+				if (player.tama[cnt].nowImageKind < TAMA_DIV_NUM - 1)	//-1しないと、最後の種類のときに++されてしまう
+				{
+					player.tama[cnt].nowImageKind++;	//弾を次の種類にする
+				}
+				else
+				{
+					player.tama[cnt].nowImageKind = 0;	//弾の種類をリセットする
+				}
+
+				player.tama[cnt].changeImageCnt = 0;
+			}
+
+			//弾を上に移動させる
+			if (player.tama[cnt].y < 0)
+			{
+				player.tama[cnt].IsDraw = FALSE;	//描画終了
+			}
+			else
+			{
+				player.tama[cnt].y -= player.tama[cnt].speed;
+			}
+		}
+	}
+
 	DrawString(0, 0, "プレイ画面(スペースキーを押してください。)", GetColor(255, 255, 255));
 
 	return;
@@ -575,12 +723,57 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageTitleROGO.x = GAME_WIDTH / 2 - ImageTitleROGO.width / 2;
 	ImageTitleROGO.y = (GAME_HEIGHT / 2 - ImageTitleROGO.height / 2) - 50;
 
+
+	//弾生成（仮）
+	//for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+	//{
+	//	//パスをコピー
+	//	strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));
+
+	//	for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
+	//	{
+	//		//ハンドルをコピー
+	//		player.tama[cnt].handle[i_num] = player.tama[0].handle[i_num];
+	//	}
+
+	//	//幅をコピー
+	//	player.tama[cnt].width = player.tama[0].width;
+
+	//	//高さをコピー
+	//	player.tama[cnt].height = player.tama[0].height;
+
+	//	//弾のX位置はプレイヤーの中心から発射
+	//	player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
+
+	//	//弾のY位置はプレイヤーの上部分から発射
+	//	player.tama[cnt].y = player.image.y;
+
+	//	//弾は最初は非表示
+	//	player.tama[cnt].IsDraw = FALSE;
+
+	//	//弾の表示カウントを0にする
+	//	player.tama[cnt].changeImageCnt = 0;
+
+	//	//弾の表示カウントMAXを設定する
+	//	player.tama[cnt].changeImageCntMAX = TAMA_CHANGE_MAX;
+
+	//	//現在の画像の種類を初期化する
+	//	player.tama[cnt].nowImageKind = 0;
+
+	//	//弾のスピードを設定する
+	//	player.tama[cnt].speed = CHARA_SPEED_LOW;
+	//}
+
 	return TRUE;
 }
 
 VOID MY_DELETE_IMAGE(VOID)
 {
 	DeleteGraph(ImageTitleROGO.handle);
+
+	//弾削除
+	//for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++) { DeleteGraph(player.tama[0].handle[i_num]); }
+
 	return;
 }
 
