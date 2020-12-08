@@ -29,6 +29,15 @@
 #define FONT_CREATE_ERR_TITLE TEXT("フォント作成エラー")
 
 #define IMAGE_TITLE_ROGO_PATH TEXT(".\\IMAGE\\ROGO.png")
+
+#define IMAGE_PLAYER_PATH TEXT(".\\IMAGE\\pipo-charachip025a.png")
+#define IMAGE_PLAYER_WIDTH		96	//画像を分割する幅サイズ
+#define IMAGE_PLAYER_HEIGHT		128	//画像を分割する高さサイズ
+
+#define IMAGE_PLAYER_TATE		3	//画像を縦に分割する数
+#define IMAGE_PLAYER_YOKO		4	//画像を横に分割する数
+
+#define IMAGE_PLAYER_NUM	IMAGE_PLAYER_TATE * IMAGE_PLAYER_YOKO	//画像を分割する総数
 #define IMAGE_LOAD_ERR_TITLE TEXT("画像読み込みエラー")
 
 #define MUSIC_TITLE_BGM_PATH TEXT(".\\MUSIC\\loop_33.wav")
@@ -208,6 +217,13 @@ int SampleNumFps = GAME_FPS;
 //キーボード入力取得
 char AllKeyState[KEY_CODE_KIND] = { '\0' };
 char OldAllKeyState[KEY_CODE_KIND] = { '\0' };
+
+/*キャラチップ*/
+//横方向と縦方向のカウント数。
+int xcount = 0, ycount = 0;
+//添字用変数
+int ix = 0, iy = 0, result = 0;
+MAP_CHIP charaChip;
 
 //マウスの座標を取得
 MOUSE mouse;
@@ -675,19 +691,64 @@ VOID MY_PLAY_PROC(VOID)
 	if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 	{
 		player.CenterY -= player.speed;
+		if (ycount > 0)
+			ycount = 0;
+		--ycount;
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 	{
 		player.CenterY += player.speed;
+		if (ycount < 0)
+			ycount = 0;
+		++ycount;
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
 	{
 		player.CenterX -= player.speed;
+		if (xcount > 0)
+			xcount = 0;
+		--xcount;
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
 	{
 		player.CenterX += player.speed;
+		if (xcount < 0)
+			xcount = 0;
+		++xcount;
 	}
+	//カウント数から添字を求める。
+	ix = abs(xcount) % 30 / 10;
+	iy = abs(ycount) % 30 / 10;
+
+	//xカウントがプラスなら右向きなので2行目の先頭添字番号を足す。
+	if (xcount > 0) {
+		ix += 3;
+		result = ix;
+	}
+	else if (xcount < 0) {
+		//マイナスなら左向きなので、4行目の先頭添字番号を足す。
+		ix += 9;
+		result = ix;
+	}
+
+	//yカウントがプラスなら下向きなので、3行目の先頭添字番号を足す。
+	if (ycount > 0) {
+		iy += 6;
+		result = iy;
+	}
+	else if (ycount < 0) {
+		//１行目の先頭添字番号は０なので何もする必要なし。(分かりやすくするために書いときました)
+		iy += 0;
+		result = iy;
+	}
+	//押されてなければカウントをゼロにする。(ここではキーが押されて【いない】で判定してる。【キーが上がっている】か否かは動作確認して合う方を使う)
+	if (MY_KEY_DOWN(KEY_INPUT_LEFT) ==FALSE && MY_KEY_DOWN(KEY_INPUT_RIGHT) == FALSE) {
+		xcount = 0;
+	}
+	if (MY_KEY_DOWN(KEY_INPUT_UP) == FALSE && MY_KEY_DOWN(KEY_INPUT_DOWN) == FALSE) {
+		ycount = 0;
+	}
+
 	//当たり判定
 	player.coll.left = player.CenterX - mapChip.width / 2 + 5;
 	player.coll.top = player.CenterY - mapChip.height / 2 + 5;
@@ -927,6 +988,22 @@ BOOL MY_LOAD_IMAGE(VOID)
 		player.tama[cnt].speed = CHARA_SPEED_LOW;
 	}
 
+
+	//プレイヤー
+	int playerRes = LoadDivGraph(
+		IMAGE_PLAYER_PATH,
+		IMAGE_PLAYER_NUM, IMAGE_PLAYER_TATE, IMAGE_PLAYER_YOKO,
+		IMAGE_PLAYER_WIDTH, IMAGE_PLAYER_HEIGHT,
+		&charaChip.handle[0]
+	);
+	if (playerRes == -1)
+	{
+		MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
+	//マップ
+
 	int mapRes = LoadDivGraph(
 		GAME_MAP_PATH,
 		MAP_DIV_NUM, MAP_DIV_TATE, MAP_DIV_YOKO,
@@ -981,6 +1058,11 @@ VOID MY_DELETE_IMAGE(VOID)
 	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++)
 	{
 		DeleteGraph(mapChip.handle[i_num]);
+	}
+
+	for (int i_num = 0; i_num < IMAGE_PLAYER_NUM; i_num++)
+	{
+		DeleteGraph(charaChip.handle[i_num]);
 	}
 	return;
 }
