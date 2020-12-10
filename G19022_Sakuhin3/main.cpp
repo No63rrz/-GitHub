@@ -169,6 +169,9 @@ typedef struct STRUCT_TAMA
 	int changeImageCnt;	//画像を変えるためのカウント
 	int changeImageCntMAX; //画像を変えるためのカウント(MAX)
 	int speed; //スピード
+
+	RECT coll;
+	iPOINT collBeforePt;
 }TAMA;	//弾の構造体
 
 
@@ -233,6 +236,7 @@ int GameScene; //ゲームシーンを管理
 
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
+CHARA enemy;
 
 //画像関係
 IMAGE ImageTitleROGO; //タイトルロゴ
@@ -786,6 +790,14 @@ VOID MY_PLAY_PROC(VOID)
 	PlayerRect.right = player.image.x + player.image.width - 40;
 	PlayerRect.bottom = player.image.y + player.image.height - 40;
 
+	RECT EnemyRect;
+	EnemyRect.left = enemy.image.x + 40;
+	EnemyRect.top = enemy.image.y + 40;
+	EnemyRect.right = enemy.image.x + player.image.width - 40;
+	EnemyRect.bottom = enemy.image.y + player.image.height - 40;
+
+
+
 	//スペースキーを押したとき
 	if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
 	{
@@ -807,6 +819,14 @@ VOID MY_PLAY_PROC(VOID)
 
 					//弾のY位置はプレイヤーの上部分から発射
 					player.tama[cnt].y = player.image.y;
+
+
+					//弾当たり判定
+					RECT TamaRect;
+					TamaRect.left = player.tama[cnt].x + 40;
+					TamaRect.top = player.tama[cnt].y + 40;
+					TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
+					TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
 
 					//弾を描画する
 					player.tama[cnt].IsDraw = TRUE;
