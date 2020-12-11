@@ -1,3 +1,7 @@
+//今わかってるバグ
+//1.プレイヤーがウィンドウ上にマウスカーソルが乗らないと表示されない問題
+//2.弾が発射されない問題
+
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
 #include "resource.h"
@@ -68,8 +72,8 @@
 //敵マップ
 //#define GAME_MAP_BK_PATH TEXT(".\\IMAGE\\ゲーム背景.png")
 #define GAME_MAP_PATH TEXT(".\\IMAGE\\enemyMAP.png") 
-#define GAME_MAP_TATE_MAX 14
-#define GAME_MAP_YOKO_MAX 24
+#define GAME_MAP_TATE_MAX 9
+#define GAME_MAP_YOKO_MAX 13
 #define GAME_MAP_KIND_MAX 2
 
 #define MAP_DIV_WIDTH 64
@@ -258,15 +262,16 @@ FONT FontTanu32;
 
 GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]
 {
-	//　0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,
-		n,n,n,n,n,n,n,n,n,n,n,n,n,n,//0
-		n,n,n,n,n,n,n,n,n,n,n,n,n,n,//1
-		n,n,n,n,n,n,n,n,n,n,n,n,n,n,//2
-		n,n,n,e,n,n,e,n,e,n,e,n,n,n,//3
-		n,n,n,n,n,n,n,n,n,n,n,n,n,n,//4
-		n,n,n,n,n,n,n,n,n,n,n,n,n,n,//5
-		n,n,n,n,n,n,n,n,n,n,n,n,n,n,//6
-		n,n,n,n,n,n,n,s,n,n,n,n,n,n,//7
+	//　0,1,2,3,4,5,6,7,8,9,0,1,2,
+		n,n,n,n,n,n,n,n,n,n,n,n,//0
+		n,n,n,n,n,n,n,n,n,n,n,n,//1
+		n,n,n,n,n,n,n,n,n,n,n,n,//2
+		n,e,n,n,e,n,e,n,e,n,n,n,//3
+		n,n,n,n,n,n,n,n,n,n,n,n,//4
+		n,n,n,n,n,n,n,n,n,n,n,n,//5
+		n,n,n,n,n,n,n,n,n,n,n,n,//6
+		n,n,n,n,n,n,n,n,n,n,n,n,//7
+		n,n,n,n,n,s,n,n,n,n,n,n//8
 		//テスト用
 };
 GAME_MAP_KIND mapDataInit[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
@@ -275,6 +280,8 @@ MAP map[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 iPOINT startPt{ -1,-1 };
 //IMAGE MapBack;
 RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+
+int player_Life;
 
 //########## プロトタイプ宣言 ##########
 VOID MY_FPS_UPDATE(VOID);
@@ -642,6 +649,17 @@ VOID MY_START_PROC(VOID)
 		{
 			StopSoundMem(TITLE.handle); //止める
 		}
+		//プレイヤーの中心位置を計算する
+		player.CenterX = startPt.x;
+		player.CenterY = startPt.y;
+
+		//プレイヤーの画像の位置を設定する
+		player.image.x = player.CenterX;
+		player.image.y = player.CenterY;
+
+		//プレイヤーの当たる以前の位置を設定する
+		player.collBeforePt.x = player.CenterX;
+		player.collBeforePt.y = player.CenterY;
 
 		MY_PLAY_INIT(); //ゲーム初期化
 
@@ -667,17 +685,7 @@ VOID MY_START_DRAW(VOID)
 
 VOID MY_PLAY_INIT(VOID)
 {
-	//プレイヤーの中心位置を計算する
-	//player.CenterX = startPt.x;
-	//player.CenterY = startPt.y;
-
-	//プレイヤーの画像の位置を設定する
-	//player.image.x = player.CenterX;
-	//player.image.y = player.CenterY;
-
-	//プレイヤーの当たる以前の位置を設定する
-	//player.collBeforePt.x = player.CenterX;
-	//player.collBeforePt.y = player.CenterY;
+	player_Life = 3; //プレイヤーのライフを設定
 
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
@@ -704,7 +712,7 @@ VOID MY_PLAY_PROC(VOID)
 		ChangeVolumeSoundMem(255 * 50 / 100, PLAY_BGM.handle); //50%の音量
 		PlaySoundMem(PLAY_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 	}
-	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
+	if (MY_KEY_UP(KEY_INPUT_ESCAPE) == TRUE)
 	{
 		if (CheckSoundMem(PLAY_BGM.handle) != 0)
 		{
@@ -959,7 +967,7 @@ VOID MY_END_PROC(VOID)
 		ChangeVolumeSoundMem(255 * 50 / 100, END_BGM.handle); //50%の音量
 		PlaySoundMem(END_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 	}
-	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
+	if (MY_KEY_UP(KEY_INPUT_ESCAPE) == TRUE)
 	{
 		if (CheckSoundMem(END_BGM.handle) != 0)
 		{
