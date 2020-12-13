@@ -34,6 +34,10 @@
 
 #define IMAGE_TITLE_ROGO_PATH TEXT(".\\IMAGE\\ROGO.png")
 
+//背景
+//#define IMAGE_PLAY_BK_PATH TEXT(".\\IMAGE\\ファイル名.png")
+//#define IMAGE_BACK_NUM 4
+
 //#define IMAGE_PLAYER_PATH TEXT(".\\IMAGE\\pipo-charachip025a.png")
 #define IMAGE_PLAYER_PATH TEXT(".\\IMAGE\\player.png")
 #define IMAGE_PLAYER_WIDTH		96	//画像を分割する幅サイズ
@@ -200,6 +204,12 @@ typedef struct STRUCT_CHARA
 
 }CHARA;
 
+typedef struct STRUCT_IMAGE_BACK
+{
+	IMAGE image;
+	BOOL IsDraw;
+}IMAGE_BACK;
+
 typedef struct STRUCT_MAP_IMAGE
 {
 	char path[PATH_MAX];
@@ -248,7 +258,7 @@ CHARA enemy;
 IMAGE ImageTitleROGO; //タイトルロゴ
 IMAGE ImageTitleBack; //タイトル背景
 
-IMAGE ImagePlayBack; //プレイ背景
+//IMAGE_BACK ImageBack[IMAGE_BACK_NUM] //プレイ背景
 
 IMAGE ImageEndBack; //エンド背景
 
@@ -882,6 +892,47 @@ VOID MY_PLAY_PROC(VOID)
 
 		player.ShotReLoadCnt++;	//リロードする
 	}
+
+	/*for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	{
+
+
+		//* 縦スクロールSTGの背景の流れ方 */
+
+		//ImageBack[num].image.y++;
+
+		//if (ImageBack[num].IsDraw == FALSE)
+		//{
+		//	if (ImageBack[num].image.y + ImageBack[num].image.height > 0)
+		//	{
+		//		ImageBack[num].IsDraw = TRUE;
+		//	}
+		//}
+
+		//if (ImageBack[num].image.y > GAME_HEIGHT)
+		//{
+		//	ImageBack[num].image.y = 0 - ImageBack[0].image.height * 3;
+		//	ImageBack[num].IsDraw = FALSE;
+		//}
+
+		//* 横スクロールSTGの背景の動き *//
+
+		/*ImageBack[num].image.x++;
+
+		if (ImageBack[num].IsDraw == FALSE)
+		{
+			if (ImageBack[num].image.x + ImageBack[num].image.width > 0)
+			{
+				ImageBack[num].IsDraw = TRUE;
+			}
+		}
+
+		if (ImageBack[num].image.x > GAME_WIDTH)
+		{
+			ImageBack[num].image.x = 0 - ImageBack[0].image.width * 3;
+			ImageBack[num].IsDraw = FALSE;
+		}
+	}*/
 	return;
 }
 
@@ -889,7 +940,20 @@ VOID MY_PLAY_DRAW(VOID)
 {
 	DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT, GetColor(0, 255, 255), TRUE);
 
-	DrawGraph(ImagePlayBack.x, ImagePlayBack.y, ImagePlayBack.handle, TRUE);
+
+	/*for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	{
+		if (ImageBack[num].IsDraw == TRUE)
+		{
+			DrawGraph(ImageBack[num].image.x, ImageBack[num].image.y, ImageBack[num].image.handle, TRUE);
+
+			//DrawFormatString(
+			//	ImageBack[num].image.x,
+			//	ImageBack[num].image.y,
+			//	GetColor(255, 255, 255), "背景画像 : %d", num + 1
+			//);
+		}
+	}*/
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE);
 	
 	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
@@ -1100,12 +1164,74 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 		}
 	}
+	/*背景*/
+	//strcpy_s(ImageBack[0].image.path, IMAGE_BACK_PATH);
+	//strcpy_s(ImageBack[1].image.path, IMAGE_BACK_REV_PATH);
+	//strcpy_s(ImageBack[2].image.path, IMAGE_BACK_PATH);
+	//strcpy_s(ImageBack[3].image.path, IMAGE_BACK_REV_PATH);
+
+
+
+	//for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	//{
+	//	ImageBack[num].image.handle = LoadGraph(ImageBack[num].image.path);
+	//	if (ImageBack[num].image.handle == -1)
+	//	{
+	//		MessageBox(GetMainWindowHandle(), IMAGE_BACK_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+	//		return FALSE;
+	//	}
+	//	GetGraphSize(ImageBack[num].image.handle, &ImageBack[num].image.width, &ImageBack[num].image.height);
+
+	//}
+
+	///* 縦用 *//
+
+	//ImageBack[0].image.x = GAME_WIDTH / 2 - ImageBack[0].image.width / 2;
+	//ImageBack[0].image.y = 0 - ImageBack[0].image.height * 0;
+	//ImageBack[0].IsDraw = FALSE;
+
+	//ImageBack[1].image.x = GAME_WIDTH / 2 - ImageBack[1].image.width / 2;
+	//ImageBack[1].image.y = 0 - ImageBack[0].image.height * 1;
+	//ImageBack[1].IsDraw = FALSE;
+
+	//ImageBack[2].image.x = GAME_WIDTH / 2 - ImageBack[2].image.width / 2;
+	//ImageBack[2].image.y = 0 - ImageBack[0].image.height * 2;
+	//ImageBack[2].IsDraw = FALSE;
+
+	//ImageBack[3].image.x = GAME_WIDTH / 2 - ImageBack[3].image.width / 2;
+	//ImageBack[3].image.y = 0 - ImageBack[0].image.height * 3;
+	//ImageBack[3].IsDraw = FALSE;
+
+	//* 横用 *//
+
+	//ImageBack[0].image.x = 0 - ImageBack[0].image.width * 0;
+	//ImageBack[0].image.y = GAME_HEIGHT / 2 - ImageBack[0].image.height / 2;
+	//ImageBack[0].IsDraw = FALSE;
+
+	//ImageBack[1].image.x = 0 - ImageBack[0].image.width * 1;
+	//ImageBack[1].image.y = GAME_HEIGHT / 2 - ImageBack[1].image.height / 2;
+	//ImageBack[1].IsDraw = FALSE;
+
+	//ImageBack[2].image.x = 0 - ImageBack[0].image.width * 2;
+	//ImageBack[2].image.y = GAME_HEIGHT / 2 - ImageBack[2].image.height / 2;
+	//ImageBack[2].IsDraw = FALSE;
+
+	//ImageBack[3].image.x = 0 - ImageBack[0].image.width * 3;
+	//ImageBack[3].image.y = GAME_HEIGHT / 2 - ImageBack[3].image.height / 2;
+	//ImageBack[3].IsDraw = FALSE;
+
 	return TRUE;
 }
 
 VOID MY_DELETE_IMAGE(VOID)
 {
 	DeleteGraph(ImageTitleROGO.handle);
+	
+	//背景
+	//for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	//{
+	//	DeleteGraph(ImageBack[0].image.handle);
+	//}
 
 	//弾削除
 	for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++) { DeleteGraph(player.tama[0].handle[i_num]); }
