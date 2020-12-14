@@ -1,6 +1,10 @@
 //今わかってるバグ
-//1.プレイヤーがウィンドウ上にマウスカーソルが乗らないと表示されない問題
+//1.プレイヤーがウィンドウ上にマウスカーソルが乗らないと操作できない問題
 //2.弾が発射されない問題
+//3.スタート位置にプレイヤーがそもそもいない
+
+//次やること
+//プレイヤーのバグ解消
 
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
@@ -40,18 +44,19 @@
 
 //#define IMAGE_PLAYER_PATH TEXT(".\\IMAGE\\pipo-charachip025a.png")
 #define IMAGE_PLAYER_PATH TEXT(".\\IMAGE\\player.png")
-#define IMAGE_PLAYER_WIDTH		96	//画像を分割する幅サイズ
-#define IMAGE_PLAYER_HEIGHT		128	//画像を分割する高さサイズ
-
-#define IMAGE_PLAYER_TATE		3	//画像を縦に分割する数
-#define IMAGE_PLAYER_YOKO		4	//画像を横に分割する数
-
-#define IMAGE_PLAYER_NUM	IMAGE_PLAYER_TATE * IMAGE_PLAYER_YOKO	//画像を分割する総数
+//#define IMAGE_PLAYER_WIDTH		96	//画像を分割する幅サイズ
+//#define IMAGE_PLAYER_HEIGHT		128	//画像を分割する高さサイズ
+//
+//#define IMAGE_PLAYER_TATE		3	//画像を縦に分割する数
+//#define IMAGE_PLAYER_YOKO		4	//画像を横に分割する数
+//
+//#define IMAGE_PLAYER_NUM	IMAGE_PLAYER_TATE * IMAGE_PLAYER_YOKO	//画像を分割する総数
 #define IMAGE_LOAD_ERR_TITLE TEXT("画像読み込みエラー")
 
 #define MUSIC_TITLE_BGM_PATH TEXT(".\\MUSIC\\loop_33.wav")
 #define MUSIC_PLAY_BGM_PATH TEXT(".\\MUSIC\\fruitsparfait.mp3")
 #define MUSIC_END_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3")
+#define MUSIC_CLEAR_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3") //BGMは仮
 
 #define MUSIC_LOAD_ERR_TITLE TEXT("音楽読み込みエラー")
 
@@ -106,6 +111,11 @@ enum GAME_SCENE {
 	GAME_SCENE_START,
 	GAME_SCENE_PLAY,
 	GAME_SCENE_END,
+};
+
+enum GAME_END {
+	GAME_END_COMP,
+	GAME_END_FAIL
 };
 
 enum CHARA_SPEED {
@@ -249,6 +259,7 @@ MOUSE mouse;
 
 //ゲーム関連
 int GameScene; //ゲームシーンを管理
+int GameEndKind;
 
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
@@ -265,7 +276,8 @@ IMAGE ImageEndBack; //エンド背景
 //音楽関係
 MUSIC TITLE;
 MUSIC PLAY_BGM;
-MUSIC END_BGM;
+MUSIC END_FAIL_BGM;
+MUSIC END_COMP_BGM;
 
 //フォント
 FONT FontTanu32;
@@ -280,8 +292,8 @@ GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]
 		n,n,n,n,n,n,n,n,n,n,n,n,//4
 		n,n,n,n,n,n,n,n,n,n,n,n,//5
 		n,n,n,n,n,n,n,n,n,n,n,n,//6
-		n,n,n,n,n,n,n,n,n,n,n,n,//7
-		n,n,n,n,n,s,n,n,n,n,n,n//8
+		n,n,n,n,n,s,n,n,n,n,n,n,//7
+		n,n,n,n,n,n,n,n,n,n,n,n//8
 		//テスト用
 };
 GAME_MAP_KIND mapDataInit[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
@@ -702,7 +714,7 @@ VOID MY_PLAY_INIT(VOID)
 		player.tama[cnt].IsDraw = FALSE;
 	}
 	player.CanShot = TRUE;
-	//GameEndKind = GAME_END_FAIL;
+	GameEndKind = GAME_END_FAIL;
 	return;
 }
 
@@ -734,35 +746,54 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	//キャラクターをキー入力で操作
-	player.speed = 2;
+	player.speed = 2;	player.speed = 2;
 	if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 	{
 		player.CenterY -= player.speed;
-		if (ycount > 0)
-			ycount = 0;
-		--ycount;
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 	{
 		player.CenterY += player.speed;
-		if (ycount < 0)
-			ycount = 0;
-		++ycount;
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
 	{
 		player.CenterX -= player.speed;
-		if (xcount > 0)
-			xcount = 0;
-		--xcount;
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
 	{
 		player.CenterX += player.speed;
-		if (xcount < 0)
-			xcount = 0;
-		++xcount;
 	}
+
+	/*この辺りはキャラチップ用の処理にしたいけどむずい*/
+	//if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+	//{
+	//	player.CenterY -= player.speed;
+	//	if (ycount > 0)
+	//		ycount = 0;
+	//	--ycount;
+	//}
+	//if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
+	//{
+	//	player.CenterY += player.speed;
+	//	if (ycount < 0)
+	//		ycount = 0;
+	//	++ycount;
+	//}
+	//if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
+	//{
+	//	player.CenterX -= player.speed;
+	//	if (xcount > 0)
+	//		xcount = 0;
+	//	--xcount;
+	//}
+	//if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
+	//{
+	//	player.CenterX += player.speed;
+	//	if (xcount < 0)
+	//		xcount = 0;
+	//	++xcount;
+	//}
+
 	//カウント数から添字を求める。
 	//ix = abs(xcount) % 30 / 10;
 	//iy = abs(ycount) % 30 / 10;
@@ -832,7 +863,7 @@ VOID MY_PLAY_PROC(VOID)
 	PlayerRect.top = player.image.y + 40;
 	PlayerRect.right = player.image.x + player.image.width - 40;
 	PlayerRect.bottom = player.image.y + player.image.height - 40;
-
+	
 	RECT EnemyRect;
 	EnemyRect.left = enemy.image.x + 40;
 	EnemyRect.top = enemy.image.y + 40;
@@ -933,6 +964,36 @@ VOID MY_PLAY_PROC(VOID)
 			ImageBack[num].IsDraw = FALSE;
 		}
 	}*/
+
+	if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
+	{
+		//ダメージSE
+		--player_Life;
+		//リスポーン処理欲しい
+	}
+
+	if (player_Life < 0) //ライフが無くなったらゲームオーバー
+	{
+		if (CheckSoundMem(PLAY_BGM.handle) != 0)
+		{
+			StopSoundMem(PLAY_BGM.handle);
+		}
+		//ここでタイマーリセット
+		GameEndKind = GAME_END_FAIL;
+		GameScene = GAME_SCENE_END;
+		return;
+	}
+	//if(/*タイムが0になったandライフが1以上*/)
+	//{
+	//	if (CheckSoundMem(PLAY_BGM.handle) != 0)
+	//	{
+	//		StopSoundMem(PLAY_BGM.handle);
+	//	}
+	//	GameEndKind = GAME_END_COMP;
+	//	GameScene = GAME_SCENE_END;
+	//	return;
+	//}
+
 	return;
 }
 
@@ -954,8 +1015,8 @@ VOID MY_PLAY_DRAW(VOID)
 			//);
 		}
 	}*/
-	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE);
-	
+	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
+
 	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
 	{
 		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
@@ -1026,18 +1087,73 @@ VOID MY_END(VOID)
 
 VOID MY_END_PROC(VOID)
 {
-	if (CheckSoundMem(END_BGM.handle) == 0)
+
+
+	switch (GameEndKind)
 	{
-		ChangeVolumeSoundMem(255 * 50 / 100, END_BGM.handle); //50%の音量
-		PlaySoundMem(END_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
+	case GAME_END_COMP:
+		if (CheckSoundMem(END_COMP_BGM.handle) == 0)
+		{
+			ChangeVolumeSoundMem(255 * 50 / 100, END_COMP_BGM.handle); //50%の音量
+			PlaySoundMem(END_COMP_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
+		}
+		//ロゴ
+		//if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
+		//{
+		//	ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
+		//}
+		//else
+		//{
+		//	if (ImageEndFAIL.IsDraw == FALSE)
+		//	{
+		//		ImageEndFAIL.IsDraw = TRUE;
+		//	}
+		//	else if (ImageEndFAIL.IsDraw == TRUE)
+		//	{
+		//		ImageEndFAIL.IsDraw = FALSE;
+		//	}
+		//	ImageEndFAIL.Cnt = 0;
+		//}
+		break;
+
+	case GAME_END_FAIL:
+		if (CheckSoundMem(END_FAIL_BGM.handle) == 0)
+		{
+			ChangeVolumeSoundMem(255 * 50 / 100, END_FAIL_BGM.handle); //50%の音量
+			PlaySoundMem(END_FAIL_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
+		}
+
+		//ロゴ
+		//if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
+		//{
+		//	ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
+		//}
+		//else
+		//{
+		//	if (ImageEndFAIL.IsDraw == FALSE)
+		//	{
+		//		ImageEndFAIL.IsDraw = TRUE;
+		//	}
+		//	else if (ImageEndFAIL.IsDraw == TRUE)
+		//	{
+		//		ImageEndFAIL.IsDraw = FALSE;
+		//	}
+		//	ImageEndFAIL.Cnt = 0;
+		//}
+		
+		break;
 	}
 	if (MY_KEY_UP(KEY_INPUT_ESCAPE) == TRUE)
 	{
-		if (CheckSoundMem(END_BGM.handle) != 0)
+		if (CheckSoundMem(END_FAIL_BGM.handle) != 0)
 		{
-			StopSoundMem(END_BGM.handle);
+			StopSoundMem(END_FAIL_BGM.handle);
 		}
-		GameScene = GAME_SCENE_START; //プレイ画面に遷移
+		//else if (CheckSoundMem(END_COMP_BGM.handle) != 0)
+		//{
+		//	StopSoundMem(END_COMP_BGM.handle);
+		//}
+		GameScene = GAME_SCENE_START;
 
 		return;
 	}
@@ -1046,6 +1162,41 @@ VOID MY_END_PROC(VOID)
 
 VOID MY_END_DRAW(VOID)
 {
+	switch (GameEndKind)
+	{
+	case GAME_END_COMP:
+		//DrawGraph(ImagePerEndBK.x, ImagePerEndBK.y, ImagePerEndBK.handle, TRUE);
+		DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT, GetColor(0, 255, 255), TRUE);
+
+		//DrawStringToHandle(GAME_WIDTH / 2, GAME_HEIGHT / 2, "正解数：%d 問/全4問中", seikai, GetColor(255, 0, 0), FontHandle);
+		//DrawFormatString(
+		//GAME_WIDTH,
+		//GAME_HEIGHT,
+		//GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
+		DrawStringToHandle(30, 330, "ミッションコンプリート！　escキーでタイトルにもどるよ", GetColor(255, 0, 0), FontTanu32.handle);
+		//if (ImageEndCOMP.IsDraw == TRUE)
+		//{
+		//	DrawGraph(ImageEndCOMP.image.x, ImageEndCOMP.image.y, ImageEndCOMP.image.handle, TRUE);
+		//}
+		break;
+
+	case GAME_END_FAIL:
+		//DrawGraph(ImageEndBK.x, ImageEndBK.y, ImageEndBK.handle, TRUE);
+		DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT, GetColor(255, 0, 0), TRUE);
+
+		//DrawFormatString(
+		//	220,
+		//	160,
+		//	GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
+		DrawStringToHandle(GAME_WIDTH / 4, 330, "残念！　escキーでタイトルに戻るよ", GetColor(0, 0, 255), FontTanu32.handle);
+		//if (ImageEndFAIL.IsDraw == TRUE)
+		//{
+		//	DrawGraph(ImageEndFAIL.image.x, ImageEndFAIL.image.y, ImageEndFAIL.image.handle, TRUE);
+		//}
+
+		break;
+	}
+
 	DrawString(0, 0, "エンド画面(エスケープキーを押してください。)", GetColor(255, 255, 255));
 
 	return;
@@ -1267,11 +1418,19 @@ BOOL(MY_LOAD_MUSIC)(VOID)
 		return FALSE;
 	}
 
-	strcpy_s(END_BGM.path, MUSIC_END_BGM_PATH);
-	END_BGM.handle = LoadSoundMem(END_BGM.path);
-	if (END_BGM.handle == -1)
+	strcpy_s(END_FAIL_BGM.path, MUSIC_END_BGM_PATH);
+	END_FAIL_BGM.handle = LoadSoundMem(END_FAIL_BGM.path);
+	if (END_FAIL_BGM.handle == -1)
 	{
 		MessageBox(GetMainWindowHandle(), MUSIC_END_BGM_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
+	strcpy_s(END_COMP_BGM.path, MUSIC_END_BGM_PATH);
+	END_COMP_BGM.handle = LoadSoundMem(END_COMP_BGM.path);
+	if (END_COMP_BGM.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_CLEAR_BGM_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
 	return TRUE;
@@ -1281,7 +1440,8 @@ VOID MY_DELETE_MUSIC(VOID)
 {
 	DeleteSoundMem(TITLE.handle);
 	DeleteSoundMem(PLAY_BGM.handle); 
-	DeleteSoundMem(END_BGM.handle);
+	DeleteSoundMem(END_FAIL_BGM.handle);
+	DeleteSoundMem(END_COMP_BGM.handle);
 	return;
 }
 
