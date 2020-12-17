@@ -5,6 +5,8 @@
 
 //次やること
 //プレイヤーのバグ解消
+//キー入力のゲームは諦めてマウス入力の仕様に変更する。
+//はよ画像作れ
 
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
@@ -95,6 +97,15 @@
 #define START_ERR_TITLE		TEXT("スタート位置エラー")
 #define START_ERR_CAPTION	TEXT("スタート位置が決まっていません")
 
+
+//エンド画面画像
+#define IMAGE_END_COMP_ROGO_PATH TEXT(".\\IMAGE\\clearROGO.png")
+#define IMAGE_END_COMP_CNT 1
+#define IMAGE_END_COMP_CNT_MAX 30
+
+#define IMAGE_END_FAIL_ROGO_PATH TEXT(".\\IMAGE\\overROGO.png")
+#define IMAGE_END_FAIL_CNT 1
+#define IMAGE_END_FAIL_CNT_MAX 30
 //閉じるボタンを押したとき
 #define MSG_CLOSE_TITLE TEXT("終了メッセージ")
 #define MSG_CLOSE_CAPTION TEXT("ゲームを終了しますか？")
@@ -220,6 +231,13 @@ typedef struct STRUCT_IMAGE_BACK
 	BOOL IsDraw;
 }IMAGE_BACK;
 
+typedef struct STRUCT_IMAGE_BLINK
+{
+	IMAGE image;
+	int Cnt;
+	int CntMAX;
+	BOOL IsDraw;
+}IMAGE_BLINK;
 typedef struct STRUCT_MAP_IMAGE
 {
 	char path[PATH_MAX];
@@ -271,7 +289,9 @@ IMAGE ImageTitleBack; //タイトル背景
 
 //IMAGE_BACK ImageBack[IMAGE_BACK_NUM] //プレイ背景
 
-IMAGE ImageEndBack; //エンド背景
+IMAGE_BLINK ImageEndFAIL; //エンドロゴ
+IMAGE_BLINK ImageEndCOMP; //エンドロゴ
+
 
 //音楽関係
 MUSIC TITLE;
@@ -722,6 +742,7 @@ VOID MY_PLAY(VOID)
 {
 	MY_PLAY_PROC();
 	MY_PLAY_DRAW();
+	DrawString(0, 0, "プレイ画面(escでエンド画面)", GetColor(255, 255, 255));
 
 	return;
 }
@@ -1073,7 +1094,6 @@ VOID MY_PLAY_DRAW(VOID)
 			}
 		}
 	}
-	DrawString(0, 0, "プレイ画面(スペースキーを押してください。)", GetColor(255, 255, 255));
 
 	return;
 }
@@ -1098,22 +1118,22 @@ VOID MY_END_PROC(VOID)
 			PlaySoundMem(END_COMP_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 		}
 		//ロゴ
-		//if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
-		//{
-		//	ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
-		//}
-		//else
-		//{
-		//	if (ImageEndFAIL.IsDraw == FALSE)
-		//	{
-		//		ImageEndFAIL.IsDraw = TRUE;
-		//	}
-		//	else if (ImageEndFAIL.IsDraw == TRUE)
-		//	{
-		//		ImageEndFAIL.IsDraw = FALSE;
-		//	}
-		//	ImageEndFAIL.Cnt = 0;
-		//}
+		if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
+		{
+			ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
+		}
+		else
+		{
+			if (ImageEndFAIL.IsDraw == FALSE)
+			{
+				ImageEndFAIL.IsDraw = TRUE;
+			}
+			else if (ImageEndFAIL.IsDraw == TRUE)
+			{
+				ImageEndFAIL.IsDraw = FALSE;
+			}
+			ImageEndFAIL.Cnt = 0;
+		}
 		break;
 
 	case GAME_END_FAIL:
@@ -1124,22 +1144,22 @@ VOID MY_END_PROC(VOID)
 		}
 
 		//ロゴ
-		//if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
-		//{
-		//	ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
-		//}
-		//else
-		//{
-		//	if (ImageEndFAIL.IsDraw == FALSE)
-		//	{
-		//		ImageEndFAIL.IsDraw = TRUE;
-		//	}
-		//	else if (ImageEndFAIL.IsDraw == TRUE)
-		//	{
-		//		ImageEndFAIL.IsDraw = FALSE;
-		//	}
-		//	ImageEndFAIL.Cnt = 0;
-		//}
+		if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
+		{
+			ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
+		}
+		else
+		{
+			if (ImageEndFAIL.IsDraw == FALSE)
+			{
+				ImageEndFAIL.IsDraw = TRUE;
+			}
+			else if (ImageEndFAIL.IsDraw == TRUE)
+			{
+				ImageEndFAIL.IsDraw = FALSE;
+			}
+			ImageEndFAIL.Cnt = 0;
+		}
 		
 		break;
 	}
@@ -1162,11 +1182,12 @@ VOID MY_END_PROC(VOID)
 
 VOID MY_END_DRAW(VOID)
 {
+	MY_PLAY_DRAW();
+
 	switch (GameEndKind)
 	{
 	case GAME_END_COMP:
 		//DrawGraph(ImagePerEndBK.x, ImagePerEndBK.y, ImagePerEndBK.handle, TRUE);
-		DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT, GetColor(0, 255, 255), TRUE);
 
 		//DrawStringToHandle(GAME_WIDTH / 2, GAME_HEIGHT / 2, "正解数：%d 問/全4問中", seikai, GetColor(255, 0, 0), FontHandle);
 		//DrawFormatString(
@@ -1174,25 +1195,24 @@ VOID MY_END_DRAW(VOID)
 		//GAME_HEIGHT,
 		//GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
 		DrawStringToHandle(30, 330, "ミッションコンプリート！　escキーでタイトルにもどるよ", GetColor(255, 0, 0), FontTanu32.handle);
-		//if (ImageEndCOMP.IsDraw == TRUE)
-		//{
-		//	DrawGraph(ImageEndCOMP.image.x, ImageEndCOMP.image.y, ImageEndCOMP.image.handle, TRUE);
-		//}
+		if (ImageEndCOMP.IsDraw == TRUE)
+		{
+			DrawGraph(ImageEndCOMP.image.x, ImageEndCOMP.image.y, ImageEndCOMP.image.handle, TRUE);
+		}
 		break;
 
 	case GAME_END_FAIL:
 		//DrawGraph(ImageEndBK.x, ImageEndBK.y, ImageEndBK.handle, TRUE);
-		DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT, GetColor(255, 0, 0), TRUE);
 
 		//DrawFormatString(
 		//	220,
 		//	160,
 		//	GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
-		DrawStringToHandle(GAME_WIDTH / 4, 330, "残念！　escキーでタイトルに戻るよ", GetColor(0, 0, 255), FontTanu32.handle);
-		//if (ImageEndFAIL.IsDraw == TRUE)
-		//{
-		//	DrawGraph(ImageEndFAIL.image.x, ImageEndFAIL.image.y, ImageEndFAIL.image.handle, TRUE);
-		//}
+		DrawStringToHandle(GAME_WIDTH / 4, 500, "残念！　escキーでタイトルに戻るよ", GetColor(0, 0, 255), FontTanu32.handle);
+		if (ImageEndFAIL.IsDraw == TRUE)
+		{
+			DrawGraph(ImageEndFAIL.image.x, ImageEndFAIL.image.y, ImageEndFAIL.image.handle, TRUE);
+		}
 
 		break;
 	}
@@ -1371,6 +1391,37 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//ImageBack[3].image.y = GAME_HEIGHT / 2 - ImageBack[3].image.height / 2;
 	//ImageBack[3].IsDraw = FALSE;
 
+	//エンドロゴ
+	strcpy_s(ImageEndCOMP.image.path, IMAGE_END_COMP_ROGO_PATH);
+	ImageEndCOMP.image.handle = LoadGraph(ImageEndCOMP.image.path);
+	if (ImageEndCOMP.image.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), IMAGE_END_COMP_ROGO_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(ImageEndCOMP.image.handle, &ImageEndCOMP.image.width, &ImageEndCOMP.image.height);
+
+	ImageEndCOMP.image.x = GAME_WIDTH / 2 - ImageEndCOMP.image.width / 2;
+	ImageEndCOMP.image.y = GAME_HEIGHT / 2 - ImageEndCOMP.image.height / 2;
+	ImageEndCOMP.Cnt = 0.0;
+	ImageEndCOMP.CntMAX = IMAGE_END_COMP_CNT_MAX;
+	ImageEndCOMP.IsDraw = FALSE;
+
+	strcpy_s(ImageEndFAIL.image.path, IMAGE_END_FAIL_ROGO_PATH);
+	ImageEndFAIL.image.handle = LoadGraph(ImageEndFAIL.image.path);
+	if (ImageEndFAIL.image.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), IMAGE_END_FAIL_ROGO_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(ImageEndFAIL.image.handle, &ImageEndFAIL.image.width, &ImageEndFAIL.image.height);
+
+	ImageEndFAIL.image.x = GAME_WIDTH / 2 - ImageEndFAIL.image.width / 2;
+	ImageEndFAIL.image.y = GAME_HEIGHT / 2 - ImageEndFAIL.image.height / 2;
+	ImageEndFAIL.Cnt = 0.0;
+	ImageEndFAIL.CntMAX = IMAGE_END_FAIL_CNT_MAX;
+	ImageEndFAIL.IsDraw = FALSE;
+
 	return TRUE;
 }
 
@@ -1397,6 +1448,8 @@ VOID MY_DELETE_IMAGE(VOID)
 	//{
 	//	DeleteGraph(charaChip.handle[i_num]);
 	//}
+	DeleteGraph(ImageEndFAIL.image.handle); //エンドロゴ
+	DeleteGraph(ImageEndCOMP.image.handle); //パフェロゴ
 	return;
 }
 
