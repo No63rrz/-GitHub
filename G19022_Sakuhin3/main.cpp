@@ -767,86 +767,46 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	//キャラクターをキー入力で操作
-	player.speed = 2;	player.speed = 2;
-	if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
-	{
-		player.CenterY -= player.speed;
-	}
-	if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
-	{
-		player.CenterY += player.speed;
-	}
-	if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
-	{
-		player.CenterX -= player.speed;
-	}
-	if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
-	{
-		player.CenterX += player.speed;
-	}
-
-	/*この辺りはキャラチップ用の処理にしたいけどむずい*/
+	//player.speed = 2;	player.speed = 2;
 	//if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 	//{
 	//	player.CenterY -= player.speed;
-	//	if (ycount > 0)
-	//		ycount = 0;
-	//	--ycount;
 	//}
 	//if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 	//{
 	//	player.CenterY += player.speed;
-	//	if (ycount < 0)
-	//		ycount = 0;
-	//	++ycount;
 	//}
 	//if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
 	//{
 	//	player.CenterX -= player.speed;
-	//	if (xcount > 0)
-	//		xcount = 0;
-	//	--xcount;
 	//}
 	//if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
 	//{
 	//	player.CenterX += player.speed;
-	//	if (xcount < 0)
-	//		xcount = 0;
-	//	++xcount;
 	//}
 
-	//カウント数から添字を求める。
-	//ix = abs(xcount) % 30 / 10;
-	//iy = abs(ycount) % 30 / 10;
+	//マウス操作
+	if (mouse.Point.x >= 0 && mouse.Point.x <= GAME_WIDTH &&
+		mouse.Point.y >= 0 && mouse.Point.y <= GAME_HEIGHT)
+	{
+		//player.CenterX = mouse.Point.x;
+		//player.CenterY = mouse.Point.y;
 
-	////xカウントがプラスなら右向きなので2行目の先頭添字番号を足す。
-	//if (xcount > 0) {
-	//	ix += 3;
-	//	result = ix;
-	//}
-	//else if (xcount < 0) {
-	//	//マイナスなら左向きなので、4行目の先頭添字番号を足す。
-	//	ix += 9;
-	//	result = ix;
-	//}
+		int MoveValue = 100;
 
-	////yカウントがプラスなら下向きなので、3行目の先頭添字番号を足す。
-	//if (ycount > 0) {
-	//	iy += 6;
-	//	result = iy;
-	//}
-	//else if (ycount < 0) {
-	//	//１行目の先頭添字番号は０なので何もする必要なし。(分かりやすくするために書いときました)
-	//	iy += 0;
-	//	result = iy;
-	//}
-	////押されてなければカウントをゼロにする。(ここではキーが押されて【いない】で判定してる。【キーが上がっている】か否かは動作確認して合う方を使う)
-	//if (MY_KEY_DOWN(KEY_INPUT_LEFT) ==FALSE && MY_KEY_DOWN(KEY_INPUT_RIGHT) == FALSE) {
-	//	xcount = 0;
-	//}
-	//if (MY_KEY_DOWN(KEY_INPUT_UP) == FALSE && MY_KEY_DOWN(KEY_INPUT_DOWN) == FALSE) {
-	//	ycount = 0;
-	//}
+		if (abs(player.collBeforePt.x - mouse.Point.x) < MoveValue &&
+			abs(player.collBeforePt.y - mouse.Point.y) < MoveValue)
+		{
+			player.CenterX = mouse.Point.x;
+			player.CenterY = mouse.Point.y;
+		}
+		else
+		{
+			player.CenterX = player.collBeforePt.x;
+			player.CenterY = player.collBeforePt.y;
+			SetMousePoint(player.collBeforePt.x, player.collBeforePt.y);
+		}
+	}
 
 	//当たり判定
 	player.coll.left = player.CenterX - mapChip.width / 2 + 5;
@@ -858,9 +818,9 @@ VOID MY_PLAY_PROC(VOID)
 
 	if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
 	{
-		player.CenterX = player.collBeforePt.x;
-		player.CenterY = player.collBeforePt.y;
-		//SetMousePoint(player.collBeforePt.x, player.collBeforePt.y);
+		//player.CenterX = player.collBeforePt.x;
+		//player.CenterY = player.collBeforePt.y;
+		SetMousePoint(player.collBeforePt.x, player.collBeforePt.y);
 
 		IsMove = FALSE;
 	}
@@ -893,8 +853,10 @@ VOID MY_PLAY_PROC(VOID)
 
 
 
-	//スペースキーを押したとき
-	if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
+	//ショット
+	//if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
+	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
+
 	{
 		//弾の描画（仮）
 		//ショットが撃てるとき
