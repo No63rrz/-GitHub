@@ -17,7 +17,7 @@
 #define GAME_COLOR			32	//画面のカラービット
 
 #define GAME_WINDOW_BAR		0	//タイトルバーはデフォルトにする
-#define GAME_WINDOW_NAME	"GAME TITLE"	//ウィンドウのタイトル
+#define GAME_WINDOW_NAME	"ポプジカルシューティング"	//ウィンドウのタイトル
 
 #define GAME_FPS 60 //FPSの数値
 
@@ -691,17 +691,35 @@ VOID MY_START_PROC(VOID)
 		{
 			StopSoundMem(TITLE.handle); //止める
 		}
+		//キーボード用↓
 		//プレイヤーの中心位置を計算する
+		//player.CenterX = startPt.x;
+		//player.CenterY = startPt.y;
+
+		////プレイヤーの画像の位置を設定する
+		//player.image.x = player.CenterX;
+		//player.image.y = player.CenterY;
+
+		////プレイヤーの当たる以前の位置を設定する
+		//player.collBeforePt.x = player.CenterX;
+		//player.collBeforePt.y = player.CenterY;
+		/*ここまで*/
+
+		//マウス用↓
+		SetMouseDispFlag(FALSE);
+
 		player.CenterX = startPt.x;
 		player.CenterY = startPt.y;
 
-		//プレイヤーの画像の位置を設定する
 		player.image.x = player.CenterX;
 		player.image.y = player.CenterY;
 
-		//プレイヤーの当たる以前の位置を設定する
 		player.collBeforePt.x = player.CenterX;
 		player.collBeforePt.y = player.CenterY;
+
+		SetMousePoint(player.image.x, player.image.y);
+
+		/*ここまで*/
 
 		MY_PLAY_INIT(); //ゲーム初期化
 
@@ -852,6 +870,18 @@ VOID MY_PLAY_PROC(VOID)
 	EnemyRect.bottom = enemy.image.y + player.image.height - 40;
 
 
+	if (enemy.image.x > GAME_WIDTH || enemy.image.y > GAME_HEIGHT ||
+		enemy.image.x + enemy.image.width < 0 || enemy.image.y + enemy.image.height < 0) //敵が画面外に出たらエンド
+	{
+		if (CheckSoundMem(PLAY_BGM.handle) != 0)
+		{
+			StopSoundMem(PLAY_BGM.handle);
+		}
+		SetMouseDispFlag(TRUE);
+		GameEndKind = GAME_END_FAIL;
+		GameScene = GAME_SCENE_END;
+		return;
+	}
 
 	//ショット
 	//if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
@@ -998,7 +1028,6 @@ VOID MY_PLAY_DRAW(VOID)
 			//);
 		}
 	}*/
-	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
 
 	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
 	{
@@ -1012,6 +1041,9 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 	/*画面下から上に動くような描写。方向を変更するかもしれない*/
+	
+	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
+
 	//弾の情報を生成
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
@@ -1045,7 +1077,7 @@ VOID MY_PLAY_DRAW(VOID)
 				player.tama[cnt].changeImageCnt = 0;
 			}
 
-			//弾を上に移動させる
+			//弾を上に移動させる（縦シューティング）
 			if (player.tama[cnt].y < 0)
 			{
 				player.tama[cnt].IsDraw = FALSE;	//描画終了
@@ -1054,6 +1086,17 @@ VOID MY_PLAY_DRAW(VOID)
 			{
 				player.tama[cnt].y -= player.tama[cnt].speed;
 			}
+
+			//* 横シューティングで右から左に飛ばす場合 *//
+
+			//if (player.tama[cnt].x < 0)
+			//{
+			//	player.tama[cnt].IsDraw = FALSE;
+			//}
+			//else
+			//{
+			//	player.tama[cnt].x -= player.tama[cnt].speed;
+			//}
 		}
 	}
 
@@ -1135,6 +1178,7 @@ VOID MY_END_PROC(VOID)
 		//{
 		//	StopSoundMem(END_COMP_BGM.handle);
 		//}
+		SetMouseDispFlag(TRUE);
 		GameScene = GAME_SCENE_START;
 
 		return;
