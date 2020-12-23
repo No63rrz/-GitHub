@@ -1,6 +1,6 @@
 //今わかってるバグ
-//1.プレイヤーがウィンドウ上にマウスカーソルが乗らないと操作できない問題
-//2.弾が発射されない問題
+//
+//2.弾が発射されない問題←クリックは反応してる。
 //3.スタート位置にプレイヤーがそもそもいない
 
 //次やること
@@ -1098,6 +1098,10 @@ VOID MY_PLAY_DRAW(VOID)
 			//	player.tama[cnt].x -= player.tama[cnt].speed;
 			//}
 		}
+	}
+	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
+	{
+		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
 	}
 
 	return;
