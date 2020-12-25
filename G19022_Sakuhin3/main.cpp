@@ -324,6 +324,7 @@ iPOINT startPt{ -1,-1 };
 RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 
 int player_Life;
+int StartTime;//プレイ開始時の現在時刻
 
 //########## プロトタイプ宣言 ##########
 VOID MY_FPS_UPDATE(VOID);
@@ -720,8 +721,15 @@ VOID MY_START_PROC(VOID)
 		SetMousePoint(player.image.x, player.image.y);
 
 		/*ここまで*/
+		player_Life = 3; //プレイヤーのライフを設定
 
-		MY_PLAY_INIT(); //ゲーム初期化
+		for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+		{
+			player.tama[cnt].IsDraw = FALSE;
+		}
+		GameEndKind = GAME_END_FAIL;
+
+		//MY_PLAY_INIT(); //ゲーム初期化
 
 		GameScene = GAME_SCENE_PLAY; //プレイ画面に遷移
 
@@ -745,14 +753,14 @@ VOID MY_START_DRAW(VOID)
 
 VOID MY_PLAY_INIT(VOID)
 {
-	player_Life = 3; //プレイヤーのライフを設定
+	//player_Life = 3; //プレイヤーのライフを設定
 
-	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
-	{
-		player.tama[cnt].IsDraw = FALSE;
-	}
-	player.CanShot = TRUE;
-	GameEndKind = GAME_END_FAIL;
+	//for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+	//{
+	//	player.tama[cnt].IsDraw = FALSE;
+	//}
+	//player.CanShot = TRUE;
+	//GameEndKind = GAME_END_FAIL;
 	return;
 }
 
@@ -784,6 +792,7 @@ VOID MY_PLAY_PROC(VOID)
 		return;
 	}
 
+	StartTime = GetNowCount(); //現在の経過時間を取得
 	//キャラクターをキー入力で操作
 	//player.speed = 2;	player.speed = 2;
 	//if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
@@ -886,9 +895,7 @@ VOID MY_PLAY_PROC(VOID)
 	//ショット
 	//if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
-
 	{
-		//弾の描画（仮）
 		//ショットが撃てるとき
 		if (player.CanShot == TRUE)
 		{
@@ -901,11 +908,13 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (player.tama[cnt].IsDraw == FALSE)
 				{
-					//弾のX位置はプレイヤーの中心から発射
+					//縦向き
 					player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
-
-					//弾のY位置はプレイヤーの上部分から発射
 					player.tama[cnt].y = player.image.y;
+
+					//* 横シューティング（プレイヤー右）の場合 *//
+					//player.tama[cnt].x = player.image.x;
+					//player.tama[cnt].y = player.image.y + 40 - player.tama[cnt].height / 2;
 
 
 					//弾当たり判定
@@ -996,16 +1005,16 @@ VOID MY_PLAY_PROC(VOID)
 		GameScene = GAME_SCENE_END;
 		return;
 	}
-	//if(/*タイムが0になったandライフが1以上*/)
-	//{
-	//	if (CheckSoundMem(PLAY_BGM.handle) != 0)
-	//	{
-	//		StopSoundMem(PLAY_BGM.handle);
-	//	}
-	//	GameEndKind = GAME_END_COMP;
-	//	GameScene = GAME_SCENE_END;
-	//	return;
-	//}
+	if(GetNowCount()-StartTime>=30000&&player_Life>0) //30秒経ったらクリア
+	{
+		if (CheckSoundMem(PLAY_BGM.handle) != 0)
+		{
+			StopSoundMem(PLAY_BGM.handle);
+		}
+		GameEndKind = GAME_END_COMP;
+		GameScene = GAME_SCENE_END;
+		return;
+	}
 
 	return;
 }
@@ -1099,11 +1108,27 @@ VOID MY_PLAY_DRAW(VOID)
 			//}
 		}
 	}
+
+	//デバッグ用（左クリック拾ってるか）
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
 	{
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
 	}
+	while (GetNowCount() - StartTime < 30000)
+	{
+		if (ProcessMessage() == -1)
+		{
+			break;    // エラーが起きたらループから抜ける
+		}
+		int NowTime = GetNowCount();
+		DrawFormatString(
+			GAME_WIDTH-300,
+			GAME_HEIGHT-15,
+			GetColor(255, 255, 255), "残り %d 秒", 30000-(NowTime-StartTime));
+		return;
+	}//カウント表示（直そう）
 
+	
 	return;
 }
 VOID MY_END(VOID)
