@@ -1544,15 +1544,16 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 				if (map[tate][yoko].kind == e)
 				{ 
 					//‚±‚±‚É“G‚É“–‚½‚Á‚½‚Æ‚«‚Ìˆ—‘‚¢‚Ä‚İ‚Ä
-					return TRUE; 
+					--player_Life;
 				}
 			}
-			//if (MY_CHECK_RECT_COLL(player.tama.coll, mapColl[tate][yoko]) == TRUE)
+			//if (MY_CHECK_RECT_COLL(player.tama[TAMA_MAX].coll, mapColl[tate][yoko]) == TRUE)
 			//{
 			//	if (map[tate][yoko].kind == e)
 			//	{
 			//		//‚±‚±‚É“G‚É“–‚½‚Á‚½‚Æ‚«‚Ìˆ—‘‚¢‚Ä‚İ‚Ä
-			//		return TRUE;
+			//		map[tate][yoko].kind = n;//“G‚ğÁ‚·
+			//		//“|‚µ‚½”‚ğ‘«‚·
 			//	}
 			//} /* ’e‚Æ“G‚ª“–‚½‚Á‚½‚Æ‚«‚ÍH */
 
@@ -1560,6 +1561,8 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 	}
 	return FALSE;
 }
+
+//‹…‚Ì“–‚½‚è”»’è‚ğˆø”‚É‚µ‚½‹…—p“–‚½‚è”»’èì‚é‚©H
 
 BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
 {
