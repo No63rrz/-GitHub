@@ -59,7 +59,7 @@
 #define MUSIC_PLAY_BGM_PATH TEXT(".\\MUSIC\\fruitsparfait.mp3")
 #define MUSIC_END_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3")
 #define MUSIC_CLEAR_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3") //BGMは仮
-
+#define MUSIC_PLAYER_SHOT_PATH TEXT(".\\MUSIC\\anime_flying.mp3")
 #define MUSIC_LOAD_ERR_TITLE TEXT("音楽読み込みエラー")
 
 //弾の設定
@@ -1114,19 +1114,19 @@ VOID MY_PLAY_DRAW(VOID)
 	{
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
 	}
-	while (GetNowCount() - StartTime < 30000)
-	{
-		if (ProcessMessage() == -1)
-		{
-			break;    // エラーが起きたらループから抜ける
-		}
-		int NowTime = GetNowCount();
-		DrawFormatString(
-			GAME_WIDTH-300,
-			GAME_HEIGHT-15,
-			GetColor(255, 255, 255), "残り %d 秒", 30000-(NowTime-StartTime));
-		return;
-	}//カウント表示（直そう）
+	//while (GetNowCount() - StartTime < 30000)
+	//{
+	//	if (ProcessMessage() == -1)
+	//	{
+	//		break;    // エラーが起きたらループから抜ける
+	//	}
+	//	int NowTime = GetNowCount();
+	//	DrawFormatString(
+	//		GAME_WIDTH-300,
+	//		GAME_HEIGHT-15,
+	//		GetColor(255, 255, 255), "残り %d 秒", 30000-(NowTime-StartTime));
+	//	return;
+	//}//カウント表示（直そう）
 
 	
 	return;
@@ -1506,6 +1506,15 @@ BOOL(MY_LOAD_MUSIC)(VOID)
 		return FALSE;
 	}
 
+	//プレイヤーのショット音
+	strcpy_s(player.musicShot.path, MUSIC_PLAYER_SHOT_PATH);			//パスの設定
+	player.musicShot.handle = LoadSoundMem(player.musicShot.path);		//読み込み
+	if (player.musicShot.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_PLAYER_SHOT_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
 	strcpy_s(END_FAIL_BGM.path, MUSIC_END_BGM_PATH);
 	END_FAIL_BGM.handle = LoadSoundMem(END_FAIL_BGM.path);
 	if (END_FAIL_BGM.handle == -1)
@@ -1528,6 +1537,8 @@ VOID MY_DELETE_MUSIC(VOID)
 {
 	DeleteSoundMem(TITLE.handle);
 	DeleteSoundMem(PLAY_BGM.handle); 
+	DeleteSoundMem(player.musicShot.handle);
+
 	DeleteSoundMem(END_FAIL_BGM.handle);
 	DeleteSoundMem(END_COMP_BGM.handle);
 	return;
