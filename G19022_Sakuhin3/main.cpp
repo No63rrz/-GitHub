@@ -325,6 +325,7 @@ RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 
 int player_Life;
 int StartTime;//プレイ開始時の現在時刻
+int NowPlayTime;
 
 //########## プロトタイプ宣言 ##########
 VOID MY_FPS_UPDATE(VOID);
@@ -1005,16 +1006,30 @@ VOID MY_PLAY_PROC(VOID)
 		GameScene = GAME_SCENE_END;
 		return;
 	}
-	if(GetNowCount()-StartTime>=30000&&player_Life>0) //30秒経ったらクリア
+
+	NowPlayTime = GetNowCount();
+	//if(NowPlayTime-StartTime>=30000&&player_Life>0) //30秒経ったらクリア
+	//{
+	//	if (CheckSoundMem(PLAY_BGM.handle) != 0)
+	//	{
+	//		StopSoundMem(PLAY_BGM.handle);
+	//	}
+	//	GameEndKind = GAME_END_COMP;
+	//	GameScene = GAME_SCENE_END;
+	//	return;
+	//}
+
+
+	if(NowPlayTime-StartTime>=5000&&player_Life>0) //5秒経ったらクリア
 	{
 		if (CheckSoundMem(PLAY_BGM.handle) != 0)
 		{
 			StopSoundMem(PLAY_BGM.handle);
 		}
-		GameEndKind = GAME_END_COMP;
+		GameEndKind = GAME_END_FAIL;
 		GameScene = GAME_SCENE_END;
 		return;
-	}
+	} /*デバッグ用*/
 
 	return;
 }
@@ -1114,19 +1129,16 @@ VOID MY_PLAY_DRAW(VOID)
 	{
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
 	}
-	//while (GetNowCount() - StartTime < 30000)
-	//{
-	//	if (ProcessMessage() == -1)
-	//	{
-	//		break;    // エラーが起きたらループから抜ける
-	//	}
-	//	int NowTime = GetNowCount();
-	//	DrawFormatString(
-	//		GAME_WIDTH-300,
-	//		GAME_HEIGHT-15,
-	//		GetColor(255, 255, 255), "残り %d 秒", 30000-(NowTime-StartTime));
-	//	return;
-	//}//カウント表示（直そう）
+
+		//DrawFormatString(
+		//	GAME_WIDTH-300,
+		//	GAME_HEIGHT-15,
+		//	GetColor(255, 255, 255), "残り %d 秒", 30000-NowPlayTime);
+	DrawFormatString(
+		GAME_WIDTH - 300,
+		GAME_HEIGHT - 15,
+		GetColor(255, 255, 255), "残り %d 秒", 5000 - (NowPlayTime-StartTime));
+	//カウント表示（直そう）
 
 	
 	return;
