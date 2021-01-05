@@ -21,6 +21,9 @@
 
 #define GAME_FPS 60 //FPSの数値
 
+#define GAME_SOUND_VOLUME_PER 30 //%
+#define GAME_SOUND_VOLUME 255 * GAME_SOUND_VOLUME_PER / 100 //↑のパーセントのボリューム
+
 //マウスのボタン
 #define MOUSE_BUTTON_CODE 129 //0x0000～0x0080まで
 
@@ -683,7 +686,7 @@ VOID MY_START_PROC(VOID)
 	//BGMが流れていないなら
 	if (CheckSoundMem(TITLE.handle) == 0)
 	{
-		ChangeVolumeSoundMem(255 * 50 / 100, TITLE.handle); //50%の音量
+		ChangeVolumeSoundMem(GAME_SOUND_VOLUME, TITLE.handle); //50%の音量
 		PlaySoundMem(TITLE.handle, DX_PLAYTYPE_LOOP); //ループ再生
 	}
 	if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
@@ -722,6 +725,7 @@ VOID MY_START_PROC(VOID)
 		SetMousePoint(player.image.x, player.image.y);
 
 		/*ここまで*/
+		StartTime = GetNowCount(); //現在の経過時間を取得
 		player_Life = 3; //プレイヤーのライフを設定
 
 		for (int cnt = 0; cnt < TAMA_MAX; cnt++)
@@ -779,7 +783,7 @@ VOID MY_PLAY_PROC(VOID)
 	//BGMが流れていないなら
 	if (CheckSoundMem(PLAY_BGM.handle) == 0)
 	{
-		ChangeVolumeSoundMem(255 * 50 / 100, PLAY_BGM.handle); //50%の音量
+		ChangeVolumeSoundMem(GAME_SOUND_VOLUME, PLAY_BGM.handle); //50%の音量
 		PlaySoundMem(PLAY_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 	}
 	if (MY_KEY_UP(KEY_INPUT_ESCAPE) == TRUE)
@@ -793,7 +797,7 @@ VOID MY_PLAY_PROC(VOID)
 		return;
 	}
 
-	StartTime = GetNowCount(); //現在の経過時間を取得
+	//StartTime = GetNowCount(); //現在の経過時間を取得
 	//キャラクターをキー入力で操作
 	//player.speed = 2;	player.speed = 2;
 	//if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
@@ -1160,7 +1164,7 @@ VOID MY_END_PROC(VOID)
 	case GAME_END_COMP:
 		if (CheckSoundMem(END_COMP_BGM.handle) == 0)
 		{
-			ChangeVolumeSoundMem(255 * 50 / 100, END_COMP_BGM.handle); //50%の音量
+			ChangeVolumeSoundMem(GAME_SOUND_VOLUME, END_COMP_BGM.handle); //50%の音量
 			PlaySoundMem(END_COMP_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 		}
 		//ロゴ
@@ -1185,7 +1189,7 @@ VOID MY_END_PROC(VOID)
 	case GAME_END_FAIL:
 		if (CheckSoundMem(END_FAIL_BGM.handle) == 0)
 		{
-			ChangeVolumeSoundMem(255 * 50 / 100, END_FAIL_BGM.handle); //50%の音量
+			ChangeVolumeSoundMem(GAME_SOUND_VOLUME, END_FAIL_BGM.handle); //50%の音量
 			PlaySoundMem(END_FAIL_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 		}
 
