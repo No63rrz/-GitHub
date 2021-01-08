@@ -1,12 +1,13 @@
 //今わかってるバグ
 //
-//2.弾が発射されない問題←クリックは反応してる。
-//3.スタート位置にプレイヤーがそもそもいない
+//バグなし！球表示は前のやつのまま
+//
 
 //次やること
-//プレイヤーのバグ解消
-//キー入力のゲームは諦めてマウス入力の仕様に変更する。
-//はよ画像作れ
+//弾の色変え（色ごとに構造体作る？）
+//弾画像を種類ごとに別の画像として分ける
+//はよ背景！！！！！！！家帰ったら速攻でやれ！！！！！！！！
+//版権どうですか
 
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
@@ -70,7 +71,7 @@
 #define TAMA_MAX			16	//最大16発まで
 
 /*弾の画像は仮。自分でちゃんと描いてね*/
-#define TAMA_RED_PATH			TEXT(".\\IMAGE\\TAMA\\red.png")		//赤弾の画像
+#define TAMA_RED_PATH			TEXT(".\\IMAGE\\TAMA\\tama_image_red.png")		//赤弾の画像
 #define TAMA_GREEN_PATH			TEXT(".\\IMAGE\\TAMA\\green.png")	//青弾の画像
 #define TAMA_BLUE_PATH			TEXT(".\\IMAGE\\TAMA\\blue.png")	//緑弾の画像
 #define TAMA_YELLOW_PATH		TEXT(".\\IMAGE\\TAMA\\yellow.png")	//黄弾の画像
@@ -1289,7 +1290,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 	//弾生成（仮）
 	int tamaRedRes = LoadDivGraph(
-		TAMA_RED_PATH,
+		TAMA_RED_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
 		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
 		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
 		&player.tama[0].handle[0]
@@ -1306,7 +1307,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
 		//パスをコピー
-		strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));
+		strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));//赤のみの弾画像をパスで渡してる。自分のもそうしてみるか
 
 		for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
 		{
