@@ -76,8 +76,8 @@
 #define TAMA_BLUE_PATH			TEXT(".\\IMAGE\\TAMA\\blue.png")	//緑弾の画像
 #define TAMA_YELLOW_PATH		TEXT(".\\IMAGE\\TAMA\\yellow.png")	//黄弾の画像
 
-#define TAMA_DIV_WIDTH		16	//画像を分割する幅サイズ
-#define TAMA_DIV_HEIGHT		16	//画像を分割する高さサイズ
+#define TAMA_DIV_WIDTH		32	//画像を分割する幅サイズ
+#define TAMA_DIV_HEIGHT		32	//画像を分割する高さサイズ
 
 #define TAMA_DIV_TATE		3	//画像を縦に分割する数
 #define TAMA_DIV_YOKO		1	//画像を横に分割する数
