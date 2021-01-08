@@ -898,13 +898,12 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	//ショット
-	//if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
 	{
 		//ショットが撃てるとき
 		if (player.CanShot == TRUE)
 		{
-			//ショット発射！！
+		
 			PlaySoundMem(player.musicShot.handle, DX_PLAYTYPE_BACK);
 			player.CanShot = FALSE;
 
@@ -923,11 +922,11 @@ VOID MY_PLAY_PROC(VOID)
 
 
 					//弾当たり判定
-					RECT TamaRect;
-					TamaRect.left = player.tama[cnt].x + 40;
-					TamaRect.top = player.tama[cnt].y + 40;
-					TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
-					TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
+					//RECT TamaRect;
+					//TamaRect.left = player.tama[cnt].x + 40;
+					//TamaRect.top = player.tama[cnt].y + 40;
+					//TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
+					//TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
 
 					//弾を描画する
 					player.tama[cnt].IsDraw = TRUE;
@@ -1030,7 +1029,7 @@ VOID MY_PLAY_PROC(VOID)
 		{
 			StopSoundMem(PLAY_BGM.handle);
 		}
-		GameEndKind = GAME_END_FAIL;
+		GameEndKind = GAME_END_FAIL; //現状FAILしかないから仕方なく
 		GameScene = GAME_SCENE_END;
 		return;
 	} /*デバッグ用*/
@@ -1141,7 +1140,7 @@ VOID MY_PLAY_DRAW(VOID)
 	DrawFormatString(
 		GAME_WIDTH - 300,
 		GAME_HEIGHT - 15,
-		GetColor(255, 255, 255), "残り %d 秒", 5000 - (NowPlayTime-StartTime));
+		GetColor(255, 0, 0), "残り %d 秒", 5000 - (NowPlayTime-StartTime));
 	//カウント表示（直そう）
 
 	
@@ -1289,6 +1288,21 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 
 	//弾生成（仮）
+	int tamaRedRes = LoadDivGraph(
+		TAMA_RED_PATH,
+		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
+		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
+		&player.tama[0].handle[0]
+	);
+
+	if (tamaRedRes == -1)
+	{
+		MessageBox(GetMainWindowHandle(), TAMA_RED_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
+	GetGraphSize(player.tama[0].handle[0], &player.tama[0].width, &player.tama[0].height);
+
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
 		//パスをコピー
