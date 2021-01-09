@@ -25,6 +25,9 @@
 #define GAME_SOUND_VOLUME_PER 30 //%
 #define GAME_SOUND_VOLUME 255 * GAME_SOUND_VOLUME_PER / 100 //↑のパーセントのボリューム
 
+#define PLAY_TIME_SECOND 10
+#define PLAY_TIME PLAY_TIME_SECOND*1000
+
 //マウスのボタン
 #define MOUSE_BUTTON_CODE 129 //0x0000～0x0080まで
 
@@ -923,11 +926,11 @@ VOID MY_PLAY_PROC(VOID)
 
 
 					//弾当たり判定
-					//RECT TamaRect;
-					//TamaRect.left = player.tama[cnt].x + 40;
-					//TamaRect.top = player.tama[cnt].y + 40;
-					//TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
-					//TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
+					RECT TamaRect;
+					TamaRect.left = player.tama[cnt].x + 40;
+					TamaRect.top = player.tama[cnt].y + 40;
+					TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
+					TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
 
 					//弾を描画する
 					player.tama[cnt].IsDraw = TRUE;
@@ -1024,7 +1027,7 @@ VOID MY_PLAY_PROC(VOID)
 	//}
 
 
-	if(NowPlayTime-StartTime>=5000&&player_Life>0) //5秒経ったらクリア
+	if(NowPlayTime-StartTime>=PLAY_TIME&&player_Life>0) //5秒経ったらクリア
 	{
 		if (CheckSoundMem(PLAY_BGM.handle) != 0)
 		{
@@ -1141,7 +1144,7 @@ VOID MY_PLAY_DRAW(VOID)
 	DrawFormatString(
 		GAME_WIDTH - 300,
 		GAME_HEIGHT - 15,
-		GetColor(255, 0, 0), "残り %d 秒", 5000 - (NowPlayTime-StartTime));
+		GetColor(255, 0, 0), "残り %d 秒", PLAY_TIME - (NowPlayTime-StartTime));
 	//カウント表示（直そう）
 
 	
