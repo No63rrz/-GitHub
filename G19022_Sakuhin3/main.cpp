@@ -72,9 +72,9 @@
 
 /*弾の画像は仮。自分でちゃんと描いてね*/
 #define TAMA_RED_PATH			TEXT(".\\IMAGE\\TAMA\\tama_image_red.png")		//赤弾の画像
-#define TAMA_GREEN_PATH			TEXT(".\\IMAGE\\TAMA\\green.png")	//青弾の画像
-#define TAMA_BLUE_PATH			TEXT(".\\IMAGE\\TAMA\\blue.png")	//緑弾の画像
-#define TAMA_YELLOW_PATH		TEXT(".\\IMAGE\\TAMA\\yellow.png")	//黄弾の画像
+#define TAMA_GREEN_PATH			TEXT(".\\IMAGE\\TAMA\\tama_image_green.png")	//青弾の画像
+#define TAMA_BLUE_PATH			TEXT(".\\IMAGE\\TAMA\\tama_image_blue.png")	//緑弾の画像
+#define TAMA_YELLOW_PATH		TEXT(".\\IMAGE\\TAMA\\tama_image_yellow.png")	//黄弾の画像
 
 #define TAMA_DIV_WIDTH		32	//画像を分割する幅サイズ
 #define TAMA_DIV_HEIGHT		32	//画像を分割する高さサイズ
@@ -144,6 +144,13 @@ enum CHARA_RELOAD {
 	CHARA_RELOAD_MIDI = 30,
 	CHARA_RELOAD_HIGH = 15
 };	//キャラクターのリロード
+
+enum TAMA_COLOR {
+	TAMA_COLOR_RED,
+	TAMA_COLOR_GREEN,
+	TAMA_COLOR_BLUE,
+	TAMA_COLOR_YELLOW
+};//弾の色
 
 //int型のPOINT構造体
 typedef struct STRUCT_I_POINT
@@ -286,6 +293,8 @@ int GameEndKind;
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
 CHARA enemy;
+
+int TamaColorKind;//弾の色管理
 
 //画像関係
 IMAGE ImageTitleROGO; //タイトルロゴ
@@ -734,6 +743,7 @@ VOID MY_START_PROC(VOID)
 			player.tama[cnt].IsDraw = FALSE;
 		}
 		GameEndKind = GAME_END_FAIL;
+		TamaColorKind = TAMA_COLOR_RED;//初期は赤
 
 		//MY_PLAY_INIT(); //ゲーム初期化
 
