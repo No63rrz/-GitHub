@@ -227,7 +227,7 @@ typedef struct STRUCT_CHARA
 
 	BOOL CanShot;				//ショットできるか
 	int ShotReLoadCnt;			//ショットリロード時間
-	int ShotReLoadCntMAX;		//ショットリロード時間(MAX)
+	int ShotReLoadCntMAX=10;		//ショットリロード時間(MAX)
 
 	TAMA tama[TAMA_MAX];
 
@@ -1351,6 +1351,9 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 		//弾のスピードを設定する
 		player.tama[cnt].speed = CHARA_SPEED_LOW;
+
+
+		//player.ShotReLoadCntMAX = 5;//弾のリロード時間（フレーム数）
 	}
 
 	strcpy_s(player.image.path, IMAGE_PLAYER_PATH);
@@ -1613,6 +1616,35 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 	}
 	return FALSE;
 }
+
+//BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player.tama[])
+//{
+//	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+//	{
+//		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+//		{
+//			if (MY_CHECK_RECT_COLL(player, mapColl[tate][yoko]) == TRUE)
+//			{
+//				if (map[tate][yoko].kind == e)
+//				{
+//					//ここに敵に当たったときの処理書いてみて
+//					--player_Life;
+//				}
+//			}
+//			//if (MY_CHECK_RECT_COLL(player.tama[TAMA_MAX].coll, mapColl[tate][yoko]) == TRUE)
+//			//{
+//			//	if (map[tate][yoko].kind == e)
+//			//	{
+//			//		//ここに敵に当たったときの処理書いてみて
+//			//		map[tate][yoko].kind = n;//敵を消す
+//			//		//倒した数を足す
+//			//	}
+//			//} /* 弾と敵が当たったときは？ */
+//
+//		}
+//	}
+//	return FALSE;
+//}
 
 //球の当たり判定を引数にした球用当たり判定作るか？
 
