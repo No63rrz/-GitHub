@@ -3,10 +3,8 @@
 //まだ弾と敵はすり抜ける
 
 //次やること
-//弾の色変え（色ごとに構造体作る？）
-//弾画像を種類ごとに別の画像として分ける
-
-//版権どうですか
+//敵１つだけにしてみる
+//
 
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
@@ -21,10 +19,10 @@
 
 #define GAME_FPS 60 //FPSの数値
 
-#define GAME_SOUND_VOLUME_PER 30 //%
-#define GAME_SOUND_VOLUME 255 * GAME_SOUND_VOLUME_PER / 100 //↑のパーセントのボリューム
+#define GAME_SOUND_VOLUME_PER 30	//%
+#define GAME_SOUND_VOLUME 255 * GAME_SOUND_VOLUME_PER / 100		//↑のパーセントのボリューム
 
-#define PLAY_TIME_SECOND 10
+#define PLAY_TIME_SECOND 60		//秒
 #define PLAY_TIME PLAY_TIME_SECOND*1000
 
 //マウスのボタン
@@ -278,13 +276,6 @@ int SampleNumFps = GAME_FPS;
 //キーボード入力取得
 char AllKeyState[KEY_CODE_KIND] = { '\0' };
 char OldAllKeyState[KEY_CODE_KIND] = { '\0' };
-
-/*キャラチップ*/
-//横方向と縦方向のカウント数。
-int xcount = 0, ycount = 0;
-//添字用変数
-int ix = 0, iy = 0, result = 0;
-MAP_CHIP charaChip;
 
 //マウスの座標を取得
 MOUSE mouse;
@@ -943,6 +934,9 @@ VOID MY_PLAY_PROC(VOID)
 					TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
 					TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
 
+					//色指定
+					//nowImageKind = TAMA_COLOR;
+
 					//弾を描画する
 					player.tama[cnt].IsDraw = TRUE;
 
@@ -1005,6 +999,11 @@ VOID MY_PLAY_PROC(VOID)
 			ImageBack[num].IsDraw = FALSE;
 		}*/
 	}
+
+	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
+	//{
+
+	//}
 
 	if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
 	{
@@ -1169,7 +1168,6 @@ VOID MY_PLAY_DRAW(VOID)
 	{
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
 	}
-
 		//DrawFormatString(
 		//	GAME_WIDTH-300,
 		//	GAME_HEIGHT-15,
@@ -1628,15 +1626,6 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 					--player_Life;
 				}
 			}
-			//if (MY_CHECK_RECT_COLL(player.tama[TAMA_MAX].coll, mapColl[tate][yoko]) == TRUE)
-			//{
-			//	if (map[tate][yoko].kind == e)
-			//	{
-			//		//ここに敵に当たったときの処理書いてみて
-			//		map[tate][yoko].kind = n;//敵を消す
-			//		//倒した数を足す
-			//	}
-			//} /* 弾と敵が当たったときは？ */
 
 		}
 	}
@@ -1649,15 +1638,19 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT tama[TAMA_MAX])
 	{
 		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
 		{
-			if (MY_CHECK_RECT_COLL(tama[TAMA_MAX], mapColl[tate][yoko]) == TRUE)
+			for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 			{
-				if (map[tate][yoko].kind == e)
+				if (MY_CHECK_RECT_COLL(tama[cnt], mapColl[tate][yoko]) == TRUE)
 				{
-					//ここに敵に当たったときの処理書いてみて
-					map[tate][yoko].kind = n;//敵を消す
-					//倒した数を足す
-				}
-			} /* 弾と敵が当たったとき（まだだめじゃん） */
+					if (map[tate][yoko].kind == e)
+					{
+						//ここに敵に当たったときの処理書いてみて
+						map[tate][yoko].kind = n;//敵を消す
+						//倒した数を足す
+					}
+				} /* 弾と敵が当たったとき（まだだめじゃん） */
+			}
+
 
 		}
 	}
