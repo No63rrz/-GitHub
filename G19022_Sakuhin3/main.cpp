@@ -1,6 +1,5 @@
 //今わかってるバグ
 //
-//連続で弾出せませんどうして（作業ネコ）
 //まだ弾と敵はすり抜ける
 
 //次やること
@@ -229,6 +228,10 @@ typedef struct STRUCT_CHARA
 	int ShotReLoadCnt;			//ショットリロード時間
 	int ShotReLoadCntMAX=10;		//ショットリロード時間(MAX)
 
+	BOOL PlayerMISS;//プレイヤーが敵と当たったかどうか
+	int PlayerReLoadCnt;//プレイヤーのリロード時間
+	int PlayerReLoadCntMAX = 180;//プレイヤーのリロードにかかる時間（約3秒）
+
 	TAMA tama[TAMA_MAX];
 
 	RECT coll;
@@ -446,6 +449,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//画面の閉じるボタンを押された時
 		if (GetWindowUserCloseFlag(TRUE))
 		{
+			SetMouseDispFlag(TRUE);
 			//終了ダイアログを表示
 			int Ret = MessageBox(GetMainWindowHandle(), MSG_CLOSE_CAPTION, MSG_CLOSE_TITLE, MB_YESNO | MB_ICONASTERISK);
 			if (Ret == IDYES) { break; } //YESならゲーム終了
@@ -737,7 +741,7 @@ VOID MY_START_PROC(VOID)
 		/*ここまで*/
 		StartTime = GetNowCount(); //現在の経過時間を取得
 		player_Life = 3; //プレイヤーのライフを設定
-
+		player.PlayerMISS = FALSE;//プレイヤーと敵はまだ当たってないからFALSE
 		for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 		{
 			player.tama[cnt].IsDraw = FALSE;
@@ -1004,9 +1008,26 @@ VOID MY_PLAY_PROC(VOID)
 
 	if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
 	{
-		//ダメージSE
-		--player_Life;
-		//リスポーン処理欲しい
+
+		if(player.PlayerMISS == FALSE)
+		{
+			//ダメージSE
+			--player_Life;
+			player.PlayerMISS = TRUE;
+			//リスポーン処理欲しい
+		}
+
+	}
+	if (player.PlayerMISS == TRUE)//リロードの無敵時間
+	{
+		//リロード時間が終わったとき
+		if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
+		{
+			player.PlayerReLoadCnt = 0;
+			player.PlayerMISS = FALSE;
+		}
+
+		player.PlayerReLoadCnt++;	//リロードする
 	}
 
 	if (player_Life < 0) //ライフが無くなったらゲームオーバー
@@ -1081,6 +1102,11 @@ VOID MY_PLAY_DRAW(VOID)
 	/*画面下から上に動くような描写。方向を変更するかもしれない*/
 	
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
+	if (player.PlayerMISS == TRUE)//リスポーン中
+	{
+		//自分を点滅させる
+		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(255, 0, 0), TRUE);
+	}
 
 	//弾の情報を生成
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
@@ -1617,34 +1643,26 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 	return FALSE;
 }
 
-//BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player.tama[])
-//{
-//	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-//	{
-//		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-//		{
-//			if (MY_CHECK_RECT_COLL(player, mapColl[tate][yoko]) == TRUE)
-//			{
-//				if (map[tate][yoko].kind == e)
-//				{
-//					//ここに敵に当たったときの処理書いてみて
-//					--player_Life;
-//				}
-//			}
-//			//if (MY_CHECK_RECT_COLL(player.tama[TAMA_MAX].coll, mapColl[tate][yoko]) == TRUE)
-//			//{
-//			//	if (map[tate][yoko].kind == e)
-//			//	{
-//			//		//ここに敵に当たったときの処理書いてみて
-//			//		map[tate][yoko].kind = n;//敵を消す
-//			//		//倒した数を足す
-//			//	}
-//			//} /* 弾と敵が当たったときは？ */
-//
-//		}
-//	}
-//	return FALSE;
-//}
+BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT tama[TAMA_MAX])
+{
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		{
+			if (MY_CHECK_RECT_COLL(tama[TAMA_MAX], mapColl[tate][yoko]) == TRUE)
+			{
+				if (map[tate][yoko].kind == e)
+				{
+					//ここに敵に当たったときの処理書いてみて
+					map[tate][yoko].kind = n;//敵を消す
+					//倒した数を足す
+				}
+			} /* 弾と敵が当たったとき（まだだめじゃん） */
+
+		}
+	}
+	return FALSE;
+}
 
 //球の当たり判定を引数にした球用当たり判定作るか？
 
