@@ -418,8 +418,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			if (mapData[tate][yoko] == e)
 			{
-				//int CenterX;
-				//int CenterY;
+				enemy.CenterX= mapChip.width * yoko + mapChip.width / 2;
+				enemy.CenterY = mapChip.height * tate + mapChip.height / 2;
+				
+
+
 				/*Ç±Ç±Ç≈ìGÇÃèÓïÒÇ¢ÇÍÇÈ*/
 			}
 			//if (mapData[tate][yoko] == g)
@@ -1012,11 +1015,11 @@ VOID MY_PLAY_PROC(VOID)
 
 	//}
 
-	if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
-	{
-		if (map[tate][yoko].kind == e)
-			map[tate][yoko].kind = n;//ìGè¡ÇµÇΩÇ©Ç¡ÇΩ
-	}
+	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
+	//{
+	//	if (map[tate][yoko].kind == e)
+	//		map[tate][yoko].kind = n;//ìGè¡ÇµÇΩÇ©Ç¡ÇΩ
+	//}
 
 	if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
 	{
