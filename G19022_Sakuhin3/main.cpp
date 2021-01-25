@@ -991,23 +991,6 @@ VOID MY_PLAY_PROC(VOID)
 			ImageBack[num].IsDraw = FALSE;
 		}
 
-		//* 横スクロールSTGの背景の動き *//
-
-		/*ImageBack[num].image.x++;
-
-		if (ImageBack[num].IsDraw == FALSE)
-		{
-			if (ImageBack[num].image.x + ImageBack[num].image.width > 0)
-			{
-				ImageBack[num].IsDraw = TRUE;
-			}
-		}
-
-		if (ImageBack[num].image.x > GAME_WIDTH)
-		{
-			ImageBack[num].image.x = 0 - ImageBack[0].image.width * 3;
-			ImageBack[num].IsDraw = FALSE;
-		}*/
 	}
 
 	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
@@ -1070,13 +1053,13 @@ VOID MY_PLAY_PROC(VOID)
 	//}
 
 
-	if(NowPlayTime-StartTime>=PLAY_TIME&&player_Life>0) //5秒経ったらクリア
+	if(NowPlayTime-StartTime>=PLAY_TIME&&player_Life>0)
 	{
 		if (CheckSoundMem(PLAY_BGM.handle) != 0)
 		{
 			StopSoundMem(PLAY_BGM.handle);
 		}
-		GameEndKind = GAME_END_FAIL; //現状FAILしかないから仕方なく
+		GameEndKind = GAME_END_COMP; //現状FAILしかないから仕方なく
 		GameScene = GAME_SCENE_END;
 		return;
 	} /*デバッグ用*/
@@ -1211,7 +1194,7 @@ VOID MY_END(VOID)
 
 VOID MY_END_PROC(VOID)
 {
-
+	SetMouseDispFlag(TRUE);
 
 	switch (GameEndKind)
 	{
@@ -1222,21 +1205,21 @@ VOID MY_END_PROC(VOID)
 			PlaySoundMem(END_COMP_BGM.handle, DX_PLAYTYPE_LOOP); //ループ再生
 		}
 		//ロゴ
-		if (ImageEndFAIL.Cnt < ImageEndFAIL.CntMAX)
+		if (ImageEndCOMP.Cnt < ImageEndCOMP.CntMAX)
 		{
-			ImageEndFAIL.Cnt += IMAGE_END_FAIL_CNT;
+			ImageEndCOMP.Cnt += IMAGE_END_COMP_CNT;
 		}
 		else
 		{
-			if (ImageEndFAIL.IsDraw == FALSE)
+			if (ImageEndCOMP.IsDraw == FALSE)
 			{
-				ImageEndFAIL.IsDraw = TRUE;
+				ImageEndCOMP.IsDraw = TRUE;
 			}
-			else if (ImageEndFAIL.IsDraw == TRUE)
+			else if (ImageEndCOMP.IsDraw == TRUE)
 			{
-				ImageEndFAIL.IsDraw = FALSE;
+				ImageEndCOMP.IsDraw = FALSE;
 			}
-			ImageEndFAIL.Cnt = 0;
+			ImageEndCOMP.Cnt = 0;
 		}
 		break;
 
@@ -1277,7 +1260,7 @@ VOID MY_END_PROC(VOID)
 		//{
 		//	StopSoundMem(END_COMP_BGM.handle);
 		//}
-		SetMouseDispFlag(TRUE);
+		
 		GameScene = GAME_SCENE_START;
 
 		return;
@@ -1307,12 +1290,6 @@ VOID MY_END_DRAW(VOID)
 		break;
 
 	case GAME_END_FAIL:
-		//DrawGraph(ImageEndBK.x, ImageEndBK.y, ImageEndBK.handle, TRUE);
-
-		//DrawFormatString(
-		//	220,
-		//	160,
-		//	GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
 		DrawStringToHandle(GAME_WIDTH / 4, 500, "残念！　escキーでタイトルに戻るよ", GetColor(0, 0, 255), FontTanu32.handle);
 		if (ImageEndFAIL.IsDraw == TRUE)
 		{
@@ -1650,31 +1627,31 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 	}
 	return FALSE;
 }
-
-BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT tama[TAMA_MAX])
-{
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-		{
-			for (int cnt = 0; cnt < TAMA_MAX; cnt++)
-			{
-				if (MY_CHECK_RECT_COLL(tama[cnt], mapColl[tate][yoko]) == TRUE)
-				{
-					if (map[tate][yoko].kind == e)
-					{
-						//ここに敵に当たったときの処理書いてみて
-						map[tate][yoko].kind = n;//敵を消す
-						//倒した数を足す
-					}
-				} /* 弾と敵が当たったとき（まだだめじゃん） */
-			}
-
-
-		}
-	}
-	return FALSE;
-}
+//
+//BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT tama[TAMA_MAX])
+//{
+//	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+//	{
+//		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+//		{
+//			for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+//			{
+//				if (MY_CHECK_RECT_COLL(tama[cnt], mapColl[tate][yoko]) == TRUE)
+//				{
+//					if (map[tate][yoko].kind == e)
+//					{
+//						//ここに敵に当たったときの処理書いてみて
+//						map[tate][yoko].kind = n;//敵を消す
+//						//倒した数を足す
+//					}
+//				} /* 弾と敵が当たったとき（まだだめじゃん） */
+//			}
+//
+//
+//		}
+//	}
+//	return FALSE;
+//}一旦これのことは考えない
 
 //球の当たり判定を引数にした球用当たり判定作るか？
 
