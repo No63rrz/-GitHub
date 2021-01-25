@@ -315,7 +315,7 @@ GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]
 		n,n,n,n,n,n,n,n,n,n,n,n,//0
 		n,n,n,n,n,n,n,n,n,n,n,n,//1
 		n,n,n,n,n,n,n,n,n,n,n,n,//2
-		n,e,n,n,e,n,e,n,e,n,n,n,//3
+		n,n,n,n,n,n,e,n,n,n,n,n,//3
 		n,n,n,n,n,n,n,n,n,n,n,n,//4
 		n,n,n,n,n,n,n,n,n,n,n,n,//5
 		n,n,n,n,n,n,n,n,n,n,n,n,//6
@@ -416,6 +416,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				startPt.y = mapChip.height * tate + mapChip.height / 2;
 			}
 
+			if (mapData[tate][yoko] == e)
+			{
+				//int CenterX;
+				//int CenterY;
+				/*ここで敵の情報いれる*/
+			}
 			//if (mapData[tate][yoko] == g)
 			//{
 			//	GoalRect.left = mapChip.width * yoko;
@@ -889,6 +895,7 @@ VOID MY_PLAY_PROC(VOID)
 	EnemyRect.right = enemy.image.x + player.image.width - 40;
 	EnemyRect.bottom = enemy.image.y + player.image.height - 40;
 
+	RECT TamaRect;//弾出すときに値を入れる
 
 	if (enemy.image.x > GAME_WIDTH || enemy.image.y > GAME_HEIGHT ||
 		enemy.image.x + enemy.image.width < 0 || enemy.image.y + enemy.image.height < 0) //敵が画面外に出たらエンド
@@ -928,7 +935,7 @@ VOID MY_PLAY_PROC(VOID)
 
 
 					//弾当たり判定
-					RECT TamaRect;
+					
 					TamaRect.left = player.tama[cnt].x + 40;
 					TamaRect.top = player.tama[cnt].y + 40;
 					TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
@@ -1005,6 +1012,12 @@ VOID MY_PLAY_PROC(VOID)
 
 	//}
 
+	if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
+	{
+		if (map[tate][yoko].kind == e)
+			map[tate][yoko].kind = n;//敵消したかった
+	}
+
 	if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
 	{
 
@@ -1014,7 +1027,7 @@ VOID MY_PLAY_PROC(VOID)
 			--player_Life;
 			player.PlayerMISS = TRUE;
 			//リスポーン処理欲しい
-		}
+		}//直前に当たってない場合にダメージ処理
 
 	}
 	if (player.PlayerMISS == TRUE)//リロードの無敵時間
@@ -1119,6 +1132,8 @@ VOID MY_PLAY_DRAW(VOID)
 				player.tama[cnt].y,
 				player.tama[cnt].handle[player.tama[cnt].nowImageKind],	//現在の画像の種類にあったハンドル
 				TRUE);
+			/*nowImageKindにどの色が入るかをパスを指定する（？）*/
+
 
 			//弾の表示フレームを増やす
 			if (player.tama[cnt].changeImageCnt < player.tama[cnt].changeImageCntMAX)
@@ -1168,15 +1183,17 @@ VOID MY_PLAY_DRAW(VOID)
 	{
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
 	}
-		//DrawFormatString(
-		//	GAME_WIDTH-300,
-		//	GAME_HEIGHT-15,
-		//	GetColor(255, 255, 255), "残り %d 秒", 30000-NowPlayTime);
+
 	DrawFormatString(
 		GAME_WIDTH - 300,
 		GAME_HEIGHT - 15,
-		GetColor(255, 0, 0), "残り %d 秒", PLAY_TIME - (NowPlayTime-StartTime));
-	//カウント表示（直そう）
+		GetColor(255, 0, 0), "残り時間: %d 秒", (PLAY_TIME - (NowPlayTime-StartTime))/1000);
+
+	DrawFormatString(
+		GAME_WIDTH - 550,
+		GAME_HEIGHT - 15,
+		GetColor(255, 0, 0), "ライフ: %d ", player_Life);
+
 
 	
 	return;
@@ -1622,8 +1639,7 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 			{
 				if (map[tate][yoko].kind == e)
 				{ 
-					//ここに敵に当たったときの処理書いてみて
-					--player_Life;
+
 				}
 			}
 
