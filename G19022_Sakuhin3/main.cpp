@@ -3,7 +3,7 @@
 //まだ弾と敵はすり抜ける
 
 //次やること
-//敵１つだけにしてみる
+//敵の【描画】PLAY_DRAW
 //敵と弾が【接触した瞬間】に敵を消す
 //
 //複数敵を作るのはやめてしょっぱなからラスボス！
@@ -99,6 +99,8 @@
 #define MAP_DIV_YOKO 4
 
 #define MAP_DIV_NUM MAP_DIV_TATE*MAP_DIV_YOKO
+
+#define ENEMY_SPEED 2
 
 #define START_ERR_TITLE		TEXT("スタート位置エラー")
 #define START_ERR_CAPTION	TEXT("スタート位置が決まっていません")
@@ -242,6 +244,19 @@ typedef struct STRUCT_CHARA
 
 }CHARA;
 
+typedef struct STRUCT_ENEMY
+{
+	IMAGE image;
+
+	RECT rect;
+	int YokoSpeed;
+	int TateSpeed;
+	BOOL IsDraw;
+
+	int Damage = 0;//現在までに受けた弾の個数
+	int DamageMAX = 100;//100発当てたら終わり
+}ENEMY;
+
 typedef struct STRUCT_IMAGE_BACK
 {
 	IMAGE image;
@@ -291,7 +306,8 @@ int GameEndKind;
 
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
-CHARA enemy;
+//CHARA enemy;
+ENEMY enemy;
 
 int TamaColorKind;//弾の色管理
 
@@ -421,18 +437,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				startPt.y = mapChip.height * tate + mapChip.height / 2;
 			}
 
-			if (mapData[tate][yoko] == e)
-			{
-				enemy.CenterX= mapChip.width * yoko + mapChip.width / 2;
-				enemy.CenterY = mapChip.height * tate + mapChip.height / 2;
-				
-				enemy.coll.left = mapChip.width * yoko;
-				enemy.coll.top = mapChip.height * tate;
-				enemy.coll.right = mapChip.width * (yoko + 1);
-				enemy.coll.bottom = mapChip.height * (tate + 1);
+			//if (mapData[tate][yoko] == e)
+			//{
+			//	enemy.CenterX= mapChip.width * yoko + mapChip.width / 2;
+			//	enemy.CenterY = mapChip.height * tate + mapChip.height / 2;
+			//	
+			//	enemy.coll.left = mapChip.width * yoko;
+			//	enemy.coll.top = mapChip.height * tate;
+			//	enemy.coll.right = mapChip.width * (yoko + 1);
+			//	enemy.coll.bottom = mapChip.height * (tate + 1);
 
-				/*ここで敵の情報いれる*/
-			}
+			//	/*ここで敵の情報いれる*/
+			//}
 			//if (mapData[tate][yoko] == g)
 			//{
 			//	GoalRect.left = mapChip.width * yoko;
@@ -757,6 +773,15 @@ VOID MY_START_PROC(VOID)
 		GameEndKind = GAME_END_FAIL;
 		TamaColorKind = TAMA_COLOR_RED;//初期は赤
 
+		enemy.rect.left = GAME_WIDTH / 2 - BALL_WIDTH / 2;		//ボールのX位置は画面の中央
+		enemy.rect.top = GAME_HEIGHT / 2 - BALL_HEIGHT / 2;		//ボールのY位置は画面の中央
+		enemy.rect.right = enemy.rect.left + BALL_WIDTH;				//ボールの幅を初期化
+		enemy.rect.bottom = enemy.rect.top + BALL_HEIGHT;				//ボールの高さを初期化
+
+		enemy.TateSpeed = ENEMY_SPEED;				//縦の速さを初期化
+		enemy.YokoSpeed = ENEMY_SPEED;				//横の速さを初期化
+		enemy.IsDraw = FALSE;							//ボールを表示しない
+
 		//MY_PLAY_INIT(); //ゲーム初期化
 
 		GameScene = GAME_SCENE_PLAY; //プレイ画面に遷移
@@ -881,11 +906,11 @@ VOID MY_PLAY_PROC(VOID)
 	PlayerRect.right = player.image.x + player.image.width - 40;
 	PlayerRect.bottom = player.image.y + player.image.height - 40;
 	
-	RECT EnemyRect;
-	EnemyRect.left = enemy.image.x + 40;
-	EnemyRect.top = enemy.image.y + 40;
-	EnemyRect.right = enemy.image.x + player.image.width - 40;
-	EnemyRect.bottom = enemy.image.y + player.image.height - 40;
+	//RECT EnemyRect;
+	//EnemyRect.left = enemy.image.x + 40;
+	//EnemyRect.top = enemy.image.y + 40;
+	//EnemyRect.right = enemy.image.x + player.image.width - 40;
+	//EnemyRect.bottom = enemy.image.y + player.image.height - 40;
 
 	RECT TamaRect[TAMA_MAX];//弾出すときに値を入れる
 
@@ -983,6 +1008,74 @@ VOID MY_PLAY_PROC(VOID)
 
 	}
 
+	//敵の動き
+	if (enemy.IsDraw == FALSE)	//ボールが非表示のとき
+	{
+		if (KeyDownState[VK_RETURN] == TRUE)	//エンターキーを押したら(所定の位置に着いたら開始でもいいね)
+		{
+			enemy.IsDraw = TRUE;	//ボール表示
+		}
+	}
+
+	if (enemy.IsDraw == TRUE)
+	{
+		/*◎当たり判定のポイント
+		　・移動する場所を先回りして、当たっているかチェックすること！
+		 　→当たっているのに、スピードが早すぎると「貫通」してしまうことも
+	　	   →プログラム中で、ボールの位置に、ボールのスピードを加減しているのが、先回りの処理
+		*/
+
+		//ボールが画面外にめり込んだ場合(左)
+		if (enemy.rect.left - enemy.YokoSpeed < 0)
+		{
+			enemy.rect.left = 0 + 1;
+			enemy.rect.right = enemy.rect.left + BALL_WIDTH + 1;
+
+			enemy.YokoSpeed = -ball.YokoSpeed;	//向きを反転させる
+		}
+
+		//ボールが画面外にめり込んだ場合(右)
+		if (enemy.rect.right + enemy.YokoSpeed > GAME_WIDTH)
+		{
+			enemy.rect.left = GAME_WIDTH - BALL_WIDTH - 1;
+			enemy.rect.right = enemy.rect.left + BALL_WIDTH - 1;
+
+			enemy.YokoSpeed = -enemy.YokoSpeed;	//向きを反転させる
+		}
+
+		//ボールが画面外にめり込んだ場合(上)
+		if (enemy.rect.top - enemy.TateSpeed < 0)
+		{
+			enemy.rect.top = 0 + 1;
+			enemy.rect.bottom = enemy.rect.top + BALL_HEIGHT;
+
+			enemy.TateSpeed = -enemy.TateSpeed;	//向きを反転させる
+		}
+
+		//ボールが画面外にめり込んだ場合(下)
+		if (enemy.rect.bottom + enemy.TateSpeed > GAME_HEIGHT)
+		{
+			enemy.rect.top = GAME_HEIGHT - BALL_HEIGHT - 1;
+			enemy.rect.bottom = enemy.rect.top + BALL_HEIGHT - 1;
+
+			enemy.TateSpeed = -ball.TateSpeed;	//向きを反転させる
+		}
+
+
+		//画面の右下のY位置が、画面の右下のY位置よりも大きいとき(敵とプレイヤーが当たったら即死)
+		if (enemy.rect.bottom > MY_WINDOW_HEIGHT)
+		{
+			IsGameEndKind = (int)end_over;	//ゲームオーバー
+			GameScene = (int)scene_end;		//シーンをエンド画面に移動させる
+		}
+		enemy.rect.left += enemy.YokoSpeed;	//ボールの左上のX位置を移動
+		enemy.rect.right += enemy.YokoSpeed;	//ボールの右下のX位置を移動
+
+		enemy.rect.top += enemy.TateSpeed;	//ボールの左上のY位置を移動
+		enemy.rect.bottom += enemy.TateSpeed;	//ボールの右下のY位置を移動
+
+	}
+
 
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
@@ -1007,29 +1100,29 @@ VOID MY_PLAY_PROC(VOID)
 	//		map[tate][yoko].kind = n;//敵消したかった
 	//}
 
-	if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
-	{
+	//if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
+	//{
 
-		if(player.PlayerMISS == FALSE)
-		{
-			//ダメージSE
-			--player_Life;
-			player.PlayerMISS = TRUE;
-			//リスポーン処理欲しい
-		}//直前に当たってない場合にダメージ処理
+	//	if(player.PlayerMISS == FALSE)
+	//	{
+	//		//ダメージSE
+	//		--player_Life;
+	//		player.PlayerMISS = TRUE;
+	//		//リスポーン処理欲しい
+	//	}//直前に当たってない場合にダメージ処理
 
-	}
-	if (player.PlayerMISS == TRUE)//リロードの無敵時間
-	{
-		//リロード時間が終わったとき
-		if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
-		{
-			player.PlayerReLoadCnt = 0;
-			player.PlayerMISS = FALSE;
-		}
+	//}
+	//if (player.PlayerMISS == TRUE)//リロードの無敵時間
+	//{
+	//	//リロード時間が終わったとき
+	//	if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
+	//	{
+	//		player.PlayerReLoadCnt = 0;
+	//		player.PlayerMISS = FALSE;
+	//	}
 
-		player.PlayerReLoadCnt++;	//リロードする
-	}
+	//	player.PlayerReLoadCnt++;	//リロードする
+	//}
 
 	if (player_Life < 0) //ライフが無くなったらゲームオーバー
 	{
