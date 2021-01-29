@@ -773,10 +773,10 @@ VOID MY_START_PROC(VOID)
 		GameEndKind = GAME_END_FAIL;
 		TamaColorKind = TAMA_COLOR_RED;//初期は赤
 
-		enemy.rect.left = GAME_WIDTH / 2 - BALL_WIDTH / 2;		//ボールのX位置は画面の中央
-		enemy.rect.top = GAME_HEIGHT / 2 - BALL_HEIGHT / 2;		//ボールのY位置は画面の中央
-		enemy.rect.right = enemy.rect.left + BALL_WIDTH;				//ボールの幅を初期化
-		enemy.rect.bottom = enemy.rect.top + BALL_HEIGHT;				//ボールの高さを初期化
+		enemy.rect.left = GAME_WIDTH / 2 - enemy.image.width / 2;		//ボールのX位置は画面の中央
+		enemy.rect.top = GAME_HEIGHT / 2 - enemy.image.height / 2;		//ボールのY位置は画面の中央
+		enemy.rect.right = enemy.rect.left + enemy.image.width;				//ボールの幅を初期化
+		enemy.rect.bottom = enemy.rect.top + enemy.image.height;				//ボールの高さを初期化
 
 		enemy.TateSpeed = ENEMY_SPEED;				//縦の速さを初期化
 		enemy.YokoSpeed = ENEMY_SPEED;				//横の速さを初期化
@@ -1009,13 +1009,13 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	//敵の動き
-	if (enemy.IsDraw == FALSE)	//ボールが非表示のとき
-	{
-		if (KeyDownState[VK_RETURN] == TRUE)	//エンターキーを押したら(所定の位置に着いたら開始でもいいね)
-		{
-			enemy.IsDraw = TRUE;	//ボール表示
-		}
-	}
+	//if (enemy.IsDraw == FALSE)	//ボールが非表示のとき
+	//{
+	//	if (KeyDownState[VK_RETURN] == TRUE)	//エンターキーを押したら(所定の位置に着いたら開始でもいいね)
+	//	{
+	//		enemy.IsDraw = TRUE;	//ボール表示
+	//	}
+	//}
 
 	if (enemy.IsDraw == TRUE)
 	{
@@ -1029,16 +1029,16 @@ VOID MY_PLAY_PROC(VOID)
 		if (enemy.rect.left - enemy.YokoSpeed < 0)
 		{
 			enemy.rect.left = 0 + 1;
-			enemy.rect.right = enemy.rect.left + BALL_WIDTH + 1;
+			enemy.rect.right = enemy.rect.left + enemy.image.width + 1;
 
-			enemy.YokoSpeed = -ball.YokoSpeed;	//向きを反転させる
+			enemy.YokoSpeed = -enemy.YokoSpeed;	//向きを反転させる
 		}
 
 		//ボールが画面外にめり込んだ場合(右)
 		if (enemy.rect.right + enemy.YokoSpeed > GAME_WIDTH)
 		{
-			enemy.rect.left = GAME_WIDTH - BALL_WIDTH - 1;
-			enemy.rect.right = enemy.rect.left + BALL_WIDTH - 1;
+			enemy.rect.left = GAME_WIDTH - enemy.image.width - 1;
+			enemy.rect.right = enemy.rect.left + enemy.image.width - 1;
 
 			enemy.YokoSpeed = -enemy.YokoSpeed;	//向きを反転させる
 		}
@@ -1047,7 +1047,7 @@ VOID MY_PLAY_PROC(VOID)
 		if (enemy.rect.top - enemy.TateSpeed < 0)
 		{
 			enemy.rect.top = 0 + 1;
-			enemy.rect.bottom = enemy.rect.top + BALL_HEIGHT;
+			enemy.rect.bottom = enemy.rect.top + enemy.image.height;
 
 			enemy.TateSpeed = -enemy.TateSpeed;	//向きを反転させる
 		}
@@ -1055,18 +1055,22 @@ VOID MY_PLAY_PROC(VOID)
 		//ボールが画面外にめり込んだ場合(下)
 		if (enemy.rect.bottom + enemy.TateSpeed > GAME_HEIGHT)
 		{
-			enemy.rect.top = GAME_HEIGHT - BALL_HEIGHT - 1;
-			enemy.rect.bottom = enemy.rect.top + BALL_HEIGHT - 1;
+			enemy.rect.top = GAME_HEIGHT - enemy.image.height - 1;
+			enemy.rect.bottom = enemy.rect.top + enemy.image.height - 1;
 
-			enemy.TateSpeed = -ball.TateSpeed;	//向きを反転させる
+			enemy.TateSpeed = -enemy.TateSpeed;	//向きを反転させる
 		}
 
 
 		//画面の右下のY位置が、画面の右下のY位置よりも大きいとき(敵とプレイヤーが当たったら即死)
-		if (enemy.rect.bottom > MY_WINDOW_HEIGHT)
+		if (MY_CHECK_RECT_COLL(enemy.rect,PlayerRect))
 		{
-			IsGameEndKind = (int)end_over;	//ゲームオーバー
-			GameScene = (int)scene_end;		//シーンをエンド画面に移動させる
+				if (CheckSoundMem(PLAY_BGM.handle) != 0)
+				{
+					StopSoundMem(PLAY_BGM.handle);
+				}
+				GameEndKind = GAME_END_COMP;
+				GameScene = GAME_SCENE_END;
 		}
 		enemy.rect.left += enemy.YokoSpeed;	//ボールの左上のX位置を移動
 		enemy.rect.right += enemy.YokoSpeed;	//ボールの右下のX位置を移動
