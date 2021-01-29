@@ -4,7 +4,12 @@
 
 //ŽŸ‚â‚é‚±‚Æ
 //“G‚P‚Â‚¾‚¯‚É‚µ‚Ä‚Ý‚é
+//“G‚Æ’e‚ªyÚG‚µ‚½uŠÔz‚É“G‚ðÁ‚·
 //
+//•¡”“G‚ðì‚é‚Ì‚Í‚â‚ß‚Ä‚µ‚å‚Á‚Ï‚È‚©‚çƒ‰ƒXƒ{ƒXI
+//«
+//1‘Ì‚ÌƒfƒJ‚¢“G‚ªŽ©•ª‚ÅF‚ð•Ï‚¦‚Äg‚ðŽç‚é
+//“G‚ÍƒoƒEƒ“ƒh‚·‚é
 
 //########## ƒwƒbƒ_[ƒtƒ@ƒCƒ‹“Ç‚Ýž‚Ý ##########
 #include "DxLib.h"
@@ -421,7 +426,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				enemy.CenterX= mapChip.width * yoko + mapChip.width / 2;
 				enemy.CenterY = mapChip.height * tate + mapChip.height / 2;
 				
-
+				enemy.coll.left = mapChip.width * yoko;
+				enemy.coll.top = mapChip.height * tate;
+				enemy.coll.right = mapChip.width * (yoko + 1);
+				enemy.coll.bottom = mapChip.height * (tate + 1);
 
 				/*‚±‚±‚Å“G‚Ìî•ñ‚¢‚ê‚é*/
 			}
@@ -812,25 +820,6 @@ VOID MY_PLAY_PROC(VOID)
 		return;
 	}
 
-	//StartTime = GetNowCount(); //Œ»Ý‚ÌŒo‰ßŽžŠÔ‚ðŽæ“¾
-	//ƒLƒƒƒ‰ƒNƒ^[‚ðƒL[“ü—Í‚Å‘€ì
-	//player.speed = 2;	player.speed = 2;
-	//if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
-	//{
-	//	player.CenterY -= player.speed;
-	//}
-	//if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
-	//{
-	//	player.CenterY += player.speed;
-	//}
-	//if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
-	//{
-	//	player.CenterX -= player.speed;
-	//}
-	//if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
-	//{
-	//	player.CenterX += player.speed;
-	//}
 
 	//ƒ}ƒEƒX‘€ì
 	if (mouse.Point.x >= 0 && mouse.Point.x <= GAME_WIDTH &&
@@ -865,8 +854,8 @@ VOID MY_PLAY_PROC(VOID)
 
 	if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
 	{
-		//player.CenterX = player.collBeforePt.x;
-		//player.CenterY = player.collBeforePt.y;
+		player.CenterX = player.collBeforePt.x;
+		player.CenterY = player.collBeforePt.y;
 		SetMousePoint(player.collBeforePt.x, player.collBeforePt.y);
 
 		IsMove = FALSE;
@@ -898,7 +887,7 @@ VOID MY_PLAY_PROC(VOID)
 	EnemyRect.right = enemy.image.x + player.image.width - 40;
 	EnemyRect.bottom = enemy.image.y + player.image.height - 40;
 
-	RECT TamaRect;//’eo‚·‚Æ‚«‚É’l‚ð“ü‚ê‚é
+	RECT TamaRect[TAMA_MAX];//’eo‚·‚Æ‚«‚É’l‚ð“ü‚ê‚é
 
 	if (enemy.image.x > GAME_WIDTH || enemy.image.y > GAME_HEIGHT ||
 		enemy.image.x + enemy.image.width < 0 || enemy.image.y + enemy.image.height < 0) //“G‚ª‰æ–ÊŠO‚Éo‚½‚çƒGƒ“ƒh
@@ -939,10 +928,11 @@ VOID MY_PLAY_PROC(VOID)
 
 					//’e“–‚½‚è”»’è
 					
-					TamaRect.left = player.tama[cnt].x + 40;
-					TamaRect.top = player.tama[cnt].y + 40;
-					TamaRect.right = player.tama[cnt].x + player.tama[cnt].width - 40;
-					TamaRect.bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
+					TamaRect[cnt].left = player.tama[cnt].x + 40;
+					TamaRect[cnt].top = player.tama[cnt].y + 40;
+					TamaRect[cnt].right = player.tama[cnt].x + player.tama[cnt].width - 40;
+					TamaRect[cnt].bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
+					//DrawBox(TamaRect[cnt].left, TamaRect[cnt].top, TamaRect[cnt].right, TamaRect[cnt].bottom, GetColor(255, 0, 255), TRUE);
 
 					//FŽw’è
 					//nowImageKind = TAMA_COLOR;
@@ -993,10 +983,23 @@ VOID MY_PLAY_PROC(VOID)
 
 	}
 
-	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
-	//{
 
-	//}
+	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+	{
+		if (player.tama[cnt].IsDraw == TRUE)//’e‚ª‚ ‚é‚Æ‚«‚¾‚¯”»’è‚·‚é
+		{
+			if(player.tama[cnt].x<enemy.image.x+ enemy.image.width &&
+				player.tama[cnt].y<enemy.image.y+ enemy.image.height &&
+				player.tama[cnt].x+ player.tama[cnt].width>enemy.image.x &&
+				player.tama[cnt].y+ player.tama[cnt].height>enemy.image.y)/*’ex*/
+			{
+				DrawBox(enemy.image.x, enemy.image.y, enemy.image.x + 10, enemy.image.y + 10, GetColor(0, 0, 255), FALSE);
+				//‚»‚à‚»‚à‚±‚ê‚Å“–‚½‚è”»’è“®‚­‚©
+			}
+		}
+
+	}
+
 
 	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
 	//{
