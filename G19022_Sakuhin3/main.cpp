@@ -1186,19 +1186,19 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-		{
-			DrawGraph(
-				map[tate][yoko].x,
-				map[tate][yoko].y,
-				mapChip.handle[map[tate][yoko].kind],
-				TRUE);
-		}
-	}
-	/*画面下から上に動くような描写。方向を変更するかもしれない*/
-	
+	//for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+	//	{
+	//		DrawGraph(
+	//			map[tate][yoko].x,
+	//			map[tate][yoko].y,
+	//			mapChip.handle[map[tate][yoko].kind],
+	//			TRUE);
+	//	}
+	//}
+
+	DrawGraph(enemy.image.x, enemy.image.y, enemy.image.handle, TRUE); //プレイヤー表示
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
 	if (player.PlayerMISS == TRUE)//リスポーン中
 	{
@@ -1494,47 +1494,103 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 	//マップ
 
-	int mapRes = LoadDivGraph(
-		GAME_MAP_PATH,
-		MAP_DIV_NUM, MAP_DIV_TATE, MAP_DIV_YOKO,
-		MAP_DIV_WIDTH, MAP_DIV_HEIGHT,
-		&mapChip.handle[0]
+	//int mapRes = LoadDivGraph(
+	//	GAME_MAP_PATH,
+	//	MAP_DIV_NUM, MAP_DIV_TATE, MAP_DIV_YOKO,
+	//	MAP_DIV_WIDTH, MAP_DIV_HEIGHT,
+	//	&mapChip.handle[0]
+	//);
+
+	//if (mapRes == -1)
+	//{
+	//	MessageBox(GetMainWindowHandle(), GAME_MAP_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+	//	return FALSE;
+	//}
+
+	//GetGraphSize(mapChip.handle[0], &mapChip.width, &mapChip.height);
+	//for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+	//	{
+	//		mapDataInit[tate][yoko] = mapData[tate][yoko];
+	//		map[tate][yoko].kind = mapData[tate][yoko];
+
+	//		map[tate][yoko].width = mapChip.width;
+	//		map[tate][yoko].height = mapChip.height;
+
+	//		map[tate][yoko].x = yoko * map[tate][yoko].width;
+	//		map[tate][yoko].y = tate * map[tate][yoko].height;
+
+	//	}
+	//}
+
+	//for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+	//	{
+	//		mapColl[tate][yoko].left = (yoko + 0) * mapChip.width + 1;
+	//		mapColl[tate][yoko].top = (tate + 0) * mapChip.height + 1;
+	//		mapColl[tate][yoko].right = (yoko + 1) * mapChip.width - 1;
+	//		mapColl[tate][yoko].bottom = (tate + 1) * mapChip.height - 1;
+
+	//	}
+	//}
+
+	/*敵単体*/
+	int enemyRedRes = LoadDivGraph(
+		TAMA_RED_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
+		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
+		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
+		&player.tama[0].handle[0]
 	);
 
-	if (mapRes == -1)
+	if (enemyRedRes == -1)
 	{
-		MessageBox(GetMainWindowHandle(), GAME_MAP_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		MessageBox(GetMainWindowHandle(), TAMA_RED_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
 
-	GetGraphSize(mapChip.handle[0], &mapChip.width, &mapChip.height);
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	GetGraphSize(player.tama[0].handle[0], &player.tama[0].width, &player.tama[0].height);
+
+	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		//パスをコピー
+		strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));//赤のみの弾画像をパスで渡してる。自分のもそうしてみるか
+
+		for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
 		{
-			mapDataInit[tate][yoko] = mapData[tate][yoko];
-			map[tate][yoko].kind = mapData[tate][yoko];
-
-			map[tate][yoko].width = mapChip.width;
-			map[tate][yoko].height = mapChip.height;
-
-			map[tate][yoko].x = yoko * map[tate][yoko].width;
-			map[tate][yoko].y = tate * map[tate][yoko].height;
-
+			//ハンドルをコピー
+			player.tama[cnt].handle[i_num] = player.tama[0].handle[i_num];
 		}
+
+		//幅をコピー
+		player.tama[cnt].width = player.tama[0].width;
+
+		//高さをコピー
+		player.tama[cnt].height = player.tama[0].height;
+
+		//弾のX位置はプレイヤーの中心から発射
+		player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
+
+		//弾のY位置はプレイヤーの上部分から発射
+		player.tama[cnt].y = player.image.y;
+
+		//弾は最初は非表示
+		player.tama[cnt].IsDraw = FALSE;
+
+		//弾の表示カウントを0にする
+		player.tama[cnt].changeImageCnt = 0;
+
+		//弾の表示カウントMAXを設定する
+		player.tama[cnt].changeImageCntMAX = TAMA_CHANGE_MAX;
+
+		//現在の画像の種類を初期化する
+		player.tama[cnt].nowImageKind = 0;
+
+		//弾のスピードを設定する
+		player.tama[cnt].speed = CHARA_SPEED_LOW;
 	}
 
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-		{
-			mapColl[tate][yoko].left = (yoko + 0) * mapChip.width + 1;
-			mapColl[tate][yoko].top = (tate + 0) * mapChip.height + 1;
-			mapColl[tate][yoko].right = (yoko + 1) * mapChip.width - 1;
-			mapColl[tate][yoko].bottom = (tate + 1) * mapChip.height - 1;
-
-		}
-	}
 	/*背景*/
 	strcpy_s(ImageBack[0].image.path, IMAGE_PLAY_BK_PATH1);
 	strcpy_s(ImageBack[1].image.path, IMAGE_PLAY_BK_PATH2);
@@ -1638,10 +1694,10 @@ VOID MY_DELETE_IMAGE(VOID)
 	//弾削除
 	for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++) { DeleteGraph(player.tama[0].handle[i_num]); }
 	//敵マップ
-	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++)
-	{
-		DeleteGraph(mapChip.handle[i_num]);
-	}
+	//for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++)
+	//{
+	//	DeleteGraph(mapChip.handle[i_num]);
+	//}
 
 	DeleteGraph(player.image.handle); //キャラ
 	//for (int i_num = 0; i_num < IMAGE_PLAYER_NUM; i_num++)
