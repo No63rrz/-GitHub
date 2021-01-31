@@ -1065,15 +1065,20 @@ VOID MY_PLAY_PROC(VOID)
 		}
 
 
-		//敵とプレイヤーが当たったら即死
+		//敵とプレイヤーが当たったら
 		if (MY_CHECK_RECT_COLL(enemy.rect,PlayerRect))
 		{
+			player_Life--;
+			if (player_Life < 1)
+			{
 				if (CheckSoundMem(PLAY_BGM.handle) != 0)
 				{
 					StopSoundMem(PLAY_BGM.handle);
 				}
-				GameEndKind = GAME_END_COMP;
+				GameEndKind = GAME_END_FAIL;
 				GameScene = GAME_SCENE_END;
+			}
+
 		}
 		enemy.rect.left += enemy.YokoSpeed;	//ボールの左上のX位置を移動
 		enemy.rect.right += enemy.YokoSpeed;	//ボールの右下のX位置を移動
