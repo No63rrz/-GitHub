@@ -100,6 +100,9 @@
 
 #define MAP_DIV_NUM MAP_DIV_TATE*MAP_DIV_YOKO
 
+#define IMAGE_ENEMY_PATH TEXT(".\\IMAGE\\ENEMY.png")
+
+
 #define ENEMY_SPEED 2
 
 #define START_ERR_TITLE		TEXT("スタート位置エラー")
@@ -780,7 +783,7 @@ VOID MY_START_PROC(VOID)
 
 		enemy.TateSpeed = ENEMY_SPEED;				//縦の速さを初期化
 		enemy.YokoSpeed = ENEMY_SPEED;				//横の速さを初期化
-		enemy.IsDraw = FALSE;							//ボールを表示しない
+		enemy.IsDraw = TRUE;							//ボールを表示しない
 
 		//MY_PLAY_INIT(); //ゲーム初期化
 
@@ -1062,7 +1065,7 @@ VOID MY_PLAY_PROC(VOID)
 		}
 
 
-		//画面の右下のY位置が、画面の右下のY位置よりも大きいとき(敵とプレイヤーが当たったら即死)
+		//敵とプレイヤーが当たったら即死
 		if (MY_CHECK_RECT_COLL(enemy.rect,PlayerRect))
 		{
 				if (CheckSoundMem(PLAY_BGM.handle) != 0)
@@ -1078,6 +1081,8 @@ VOID MY_PLAY_PROC(VOID)
 		enemy.rect.top += enemy.TateSpeed;	//ボールの左上のY位置を移動
 		enemy.rect.bottom += enemy.TateSpeed;	//ボールの右下のY位置を移動
 
+		enemy.image.x += enemy.YokoSpeed;	//ボールのX位置を移動
+		enemy.image.y += enemy.TateSpeed;	//ボールのY位置を移動
 	}
 
 
@@ -1356,10 +1361,10 @@ VOID MY_END_PROC(VOID)
 		{
 			StopSoundMem(END_FAIL_BGM.handle);
 		}
-		//else if (CheckSoundMem(END_COMP_BGM.handle) != 0)
-		//{
-		//	StopSoundMem(END_COMP_BGM.handle);
-		//}
+		else if (CheckSoundMem(END_COMP_BGM.handle) != 0)
+		{
+			StopSoundMem(END_COMP_BGM.handle);
+		}
 		
 		GameScene = GAME_SCENE_START;
 
@@ -1537,59 +1542,74 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//}
 
 	/*敵単体*/
-	int enemyRedRes = LoadDivGraph(
-		TAMA_RED_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
-		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
-		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
-		&player.tama[0].handle[0]
-	);
+	strcpy_s(enemy.image.path, IMAGE_ENEMY_PATH);
+	enemy.image.handle = LoadGraph(enemy.image.path);
 
-	if (enemyRedRes == -1)
+	if (enemy.image.handle == -1)
 	{
-		MessageBox(GetMainWindowHandle(), TAMA_RED_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	GetGraphSize(enemy.image.handle, &enemy.image.width, &enemy.image.height);	//画像の幅と高さを取得
+	enemy.image.x = GAME_WIDTH / 2 - enemy.image.width / 2;		//左右中央揃え
+	enemy.image.y = GAME_HEIGHT / 2 - enemy.image.height / 2;		//上下中央揃え
+	//enemy.CenterX = enemy.image.x + enemy.image.width / 2;		//画像の横の中心を探す
+	//enemy.CenterY = enemy.image.y + enemy.image.height / 2;		//画像の縦の中心を探す
 
-	GetGraphSize(player.tama[0].handle[0], &player.tama[0].width, &player.tama[0].height);
 
-	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
-	{
-		//パスをコピー
-		strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));//赤のみの弾画像をパスで渡してる。自分のもそうしてみるか
+	//int enemyRedRes = LoadDivGraph(
+	//	TAMA_RED_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
+	//	TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
+	//	TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
+	//	&player.tama[0].handle[0]
+	//);
 
-		for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
-		{
-			//ハンドルをコピー
-			player.tama[cnt].handle[i_num] = player.tama[0].handle[i_num];
-		}
+	//if (enemyRedRes == -1)
+	//{
+	//	MessageBox(GetMainWindowHandle(), TAMA_RED_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+	//	return FALSE;
+	//}
 
-		//幅をコピー
-		player.tama[cnt].width = player.tama[0].width;
+	//GetGraphSize(player.tama[0].handle[0], &player.tama[0].width, &player.tama[0].height);
 
-		//高さをコピー
-		player.tama[cnt].height = player.tama[0].height;
+	//for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+	//{
+	//	//パスをコピー
+	//	strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));//赤のみの弾画像をパスで渡してる。自分のもそうしてみるか
 
-		//弾のX位置はプレイヤーの中心から発射
-		player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
+	//	for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
+	//	{
+	//		//ハンドルをコピー
+	//		player.tama[cnt].handle[i_num] = player.tama[0].handle[i_num];
+	//	}
 
-		//弾のY位置はプレイヤーの上部分から発射
-		player.tama[cnt].y = player.image.y;
+	//	//幅をコピー
+	//	player.tama[cnt].width = player.tama[0].width;
 
-		//弾は最初は非表示
-		player.tama[cnt].IsDraw = FALSE;
+	//	//高さをコピー
+	//	player.tama[cnt].height = player.tama[0].height;
 
-		//弾の表示カウントを0にする
-		player.tama[cnt].changeImageCnt = 0;
+	//	//弾のX位置はプレイヤーの中心から発射
+	//	player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
 
-		//弾の表示カウントMAXを設定する
-		player.tama[cnt].changeImageCntMAX = TAMA_CHANGE_MAX;
+	//	//弾のY位置はプレイヤーの上部分から発射
+	//	player.tama[cnt].y = player.image.y;
 
-		//現在の画像の種類を初期化する
-		player.tama[cnt].nowImageKind = 0;
+	//	//弾は最初は非表示
+	//	player.tama[cnt].IsDraw = FALSE;
 
-		//弾のスピードを設定する
-		player.tama[cnt].speed = CHARA_SPEED_LOW;
-	}
+	//	//弾の表示カウントを0にする
+	//	player.tama[cnt].changeImageCnt = 0;
+
+	//	//弾の表示カウントMAXを設定する
+	//	player.tama[cnt].changeImageCntMAX = TAMA_CHANGE_MAX;
+
+	//	//現在の画像の種類を初期化する
+	//	player.tama[cnt].nowImageKind = 0;
+
+	//	//弾のスピードを設定する
+	//	player.tama[cnt].speed = CHARA_SPEED_LOW;
+	//}
 
 	/*背景*/
 	strcpy_s(ImageBack[0].image.path, IMAGE_PLAY_BK_PATH1);
@@ -1700,6 +1720,8 @@ VOID MY_DELETE_IMAGE(VOID)
 	//}
 
 	DeleteGraph(player.image.handle); //キャラ
+	DeleteGraph(enemy.image.handle); //敵
+
 	//for (int i_num = 0; i_num < IMAGE_PLAYER_NUM; i_num++)
 	//{
 	//	DeleteGraph(charaChip.handle[i_num]);
