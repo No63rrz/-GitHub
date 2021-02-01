@@ -1384,7 +1384,7 @@ VOID MY_END_PROC(VOID)
 		
 		break;
 	}
-	if (MY_KEY_UP(KEY_INPUT_ESCAPE) == TRUE)
+	if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE)
 	{
 		if (CheckSoundMem(END_FAIL_BGM.handle) != 0)
 		{
@@ -1416,7 +1416,7 @@ VOID MY_END_DRAW(VOID)
 		//GAME_WIDTH,
 		//GAME_HEIGHT,
 		//GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
-		DrawStringToHandle(30, 330, "ミッションコンプリート！　escキーでタイトルにもどるよ", GetColor(255, 0, 0), FontTanu32.handle);
+		DrawStringToHandle(30, 330, "ミッションコンプリート！　クリックでタイトルにもどるよ", GetColor(255, 0, 0), FontTanu32.handle);
 		if (ImageEndCOMP.IsDraw == TRUE)
 		{
 			DrawGraph(ImageEndCOMP.image.x, ImageEndCOMP.image.y, ImageEndCOMP.image.handle, TRUE);
@@ -1424,7 +1424,7 @@ VOID MY_END_DRAW(VOID)
 		break;
 
 	case GAME_END_FAIL:
-		DrawStringToHandle(GAME_WIDTH / 4, 500, "残念！　escキーでタイトルに戻るよ", GetColor(0, 0, 255), FontTanu32.handle);
+		DrawStringToHandle(GAME_WIDTH / 4, 500, "残念！　クリックでタイトルに戻るよ", GetColor(0, 0, 255), FontTanu32.handle);
 		if (ImageEndFAIL.IsDraw == TRUE)
 		{
 			DrawGraph(ImageEndFAIL.image.x, ImageEndFAIL.image.y, ImageEndFAIL.image.handle, TRUE);
