@@ -1103,6 +1103,23 @@ VOID MY_PLAY_PROC(VOID)
 		}
 
 	}
+	/*	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
+		{
+			// ’ei‚ª‘¶Ý‚µ‚Ä‚¢‚éê‡‚Ì‚ÝŽŸ‚Ìˆ—‚É‰f‚é
+			if (player.tama[cnt].IsDraw == TRUE)
+			{
+				// ŽlŠpŒN‚Æ‚Ì“–‚½‚è”»’è
+				if( ( ( ShotX[i] > SikakuX && ShotX[i] < SikakuX + SikakuW ) ||
+					( SikakuX > ShotX[i] && SikakuX < ShotX[i] + ShotW ) ) &&
+					( ( ShotY[i] > SikakuY && ShotY[i] < SikakuY + SikakuH ) ||
+					( SikakuY > ShotY[i] && SikakuY < ShotY[i] + ShotH ) ) )
+				{
+					// ÚG‚µ‚Ä‚¢‚éê‡‚Í“–‚½‚Á‚½’e‚Ì‘¶Ý‚ðÁ‚·
+					player.tama[cnt].IsDraw = FALSE;//“–‚½‚Á‚½‚çÁ‚·
+					enemy.Damage++;
+				}
+			}
+		}*/
 
 	if (enemy.Damage >= enemy.DamageMAX)
 	{
