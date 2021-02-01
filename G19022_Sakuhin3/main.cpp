@@ -352,7 +352,7 @@ MAP_CHIP mapChip;
 MAP map[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 iPOINT startPt{ -1,-1 };
 //IMAGE MapBack;
-RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+//RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 
 int player_Life;
 int StartTime;//プレイ開始時の現在時刻
@@ -440,26 +440,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				startPt.y = mapChip.height * tate + mapChip.height / 2;
 			}
 
-			//if (mapData[tate][yoko] == e)
-			//{
-			//	enemy.CenterX= mapChip.width * yoko + mapChip.width / 2;
-			//	enemy.CenterY = mapChip.height * tate + mapChip.height / 2;
-			//	
-			//	enemy.coll.left = mapChip.width * yoko;
-			//	enemy.coll.top = mapChip.height * tate;
-			//	enemy.coll.right = mapChip.width * (yoko + 1);
-			//	enemy.coll.bottom = mapChip.height * (tate + 1);
-
-			//	/*ここで敵の情報いれる*/
-			//}
-			//if (mapData[tate][yoko] == g)
-			//{
-			//	GoalRect.left = mapChip.width * yoko;
-			//	GoalRect.top = mapChip.height * tate;
-			//	GoalRect.right = mapChip.width * (yoko + 1);
-			//	GoalRect.bottom = mapChip.height * (tate + 1);
-
-			//}
 		}
 	}
 
@@ -730,7 +710,7 @@ VOID MY_START_PROC(VOID)
 		ChangeVolumeSoundMem(GAME_SOUND_VOLUME, TITLE.handle); //50%の音量
 		PlaySoundMem(TITLE.handle, DX_PLAYTYPE_LOOP); //ループ再生
 	}
-	if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+	if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE)
 	{
 		//BGMが流れていたら
 		if (CheckSoundMem(TITLE.handle) != 0)
@@ -802,7 +782,7 @@ VOID MY_START_DRAW(VOID)
 	DrawString(0, 0, "スタート画面（エンターキーを押してください）", GetColor(255, 255, 255));
 	DrawGraph(ImageTitleROGO.x, ImageTitleROGO.y, ImageTitleROGO.handle, TRUE);
 	
-	DrawStringToHandle(GAME_WIDTH/4, GAME_HEIGHT/2+50, "エンターキーをおしてね！", GetColor(255, 255, 255), FontTanu32.handle);
+	DrawStringToHandle(GAME_WIDTH/4, GAME_HEIGHT/2+50, "クリックでスタート！", GetColor(255, 255, 255), FontTanu32.handle);
 
 	return;
 }
@@ -880,14 +860,14 @@ VOID MY_PLAY_PROC(VOID)
 
 	BOOL IsMove = TRUE;
 
-	if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
-	{
-		player.CenterX = player.collBeforePt.x;
-		player.CenterY = player.collBeforePt.y;
-		SetMousePoint(player.collBeforePt.x, player.collBeforePt.y);
+	//if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
+	//{
+	//	player.CenterX = player.collBeforePt.x;
+	//	player.CenterY = player.collBeforePt.y;
+	//	SetMousePoint(player.collBeforePt.x, player.collBeforePt.y);
 
-		IsMove = FALSE;
-	}
+	//	IsMove = FALSE;
+	//}
 	if (IsMove == TRUE)
 	{
 		if (mouse.Point.x >= 0 && mouse.Point.x <= GAME_WIDTH
@@ -909,26 +889,21 @@ VOID MY_PLAY_PROC(VOID)
 	PlayerRect.right = player.image.x + player.image.width - 40;
 	PlayerRect.bottom = player.image.y + player.image.height - 40;
 	
-	//RECT EnemyRect;
-	//EnemyRect.left = enemy.image.x + 40;
-	//EnemyRect.top = enemy.image.y + 40;
-	//EnemyRect.right = enemy.image.x + player.image.width - 40;
-	//EnemyRect.bottom = enemy.image.y + player.image.height - 40;
 
-	RECT TamaRect[TAMA_MAX];//弾出すときに値を入れる
+	RECT TamaRect[TAMA_MAX] = {0,0,0,0};//弾出すときに値を入れる
 
-	if (enemy.image.x > GAME_WIDTH || enemy.image.y > GAME_HEIGHT ||
-		enemy.image.x + enemy.image.width < 0 || enemy.image.y + enemy.image.height < 0) //敵が画面外に出たらエンド
-	{
-		if (CheckSoundMem(PLAY_BGM.handle) != 0)
-		{
-			StopSoundMem(PLAY_BGM.handle);
-		}
-		SetMouseDispFlag(TRUE);
-		GameEndKind = GAME_END_FAIL;
-		GameScene = GAME_SCENE_END;
-		return;
-	}
+	//if (enemy.image.x > GAME_WIDTH || enemy.image.y > GAME_HEIGHT ||
+	//	enemy.image.x + enemy.image.width < 0 || enemy.image.y + enemy.image.height < 0) //敵が画面外に出たらエンド
+	//{
+	//	if (CheckSoundMem(PLAY_BGM.handle) != 0)
+	//	{
+	//		StopSoundMem(PLAY_BGM.handle);
+	//	}
+	//	SetMouseDispFlag(TRUE);
+	//	GameEndKind = GAME_END_FAIL;
+	//	GameScene = GAME_SCENE_END;
+	//	return;
+	//}
 
 	//ショット
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
@@ -1116,18 +1091,26 @@ VOID MY_PLAY_PROC(VOID)
 	{
 		if (player.tama[cnt].IsDraw == TRUE)//弾があるときだけ判定する
 		{
-			if(player.tama[cnt].x<enemy.image.x+ enemy.image.width &&
-				player.tama[cnt].y<enemy.image.y+ enemy.image.height &&
-				player.tama[cnt].x+ player.tama[cnt].width>enemy.image.x &&
-				player.tama[cnt].y+ player.tama[cnt].height>enemy.image.y)/*弾x*/
+			if (MY_CHECK_RECT_COLL(player.tama[cnt].coll,enemy.rect))
 			{
-				DrawBox(enemy.image.x, enemy.image.y, enemy.image.x + 10, enemy.image.y + 10, GetColor(0, 0, 255), FALSE);
-				//そもそもこれで当たり判定動くか
+				player.tama[cnt].IsDraw = FALSE;//当たったら消す
+				enemy.Damage++;
+
 			}
 		}
 
 	}
 
+	if (enemy.Damage >= enemy.DamageMAX)
+	{
+		if (CheckSoundMem(PLAY_BGM.handle) != 0)
+		{
+			StopSoundMem(PLAY_BGM.handle);
+		}
+		GameEndKind = GAME_END_COMP;
+		GameScene = GAME_SCENE_END;
+		return;
+	}
 
 	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
 	//{
@@ -1190,7 +1173,7 @@ VOID MY_PLAY_PROC(VOID)
 		{
 			StopSoundMem(PLAY_BGM.handle);
 		}
-		GameEndKind = GAME_END_COMP; //現状FAILしかないから仕方なく
+		GameEndKind = GAME_END_COMP; 
 		GameScene = GAME_SCENE_END;
 		return;
 	} /*デバッグ用*/
@@ -1489,6 +1472,9 @@ BOOL MY_LOAD_IMAGE(VOID)
 		//弾のY位置はプレイヤーの上部分から発射
 		player.tama[cnt].y = player.image.y;
 
+		//弾の当たり判定
+
+
 		//弾は最初は非表示
 		player.tama[cnt].IsDraw = FALSE;
 
@@ -1714,24 +1700,24 @@ VOID MY_DELETE_MUSIC(VOID)
 	return;
 }
 
-BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
-{
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-		{
-			if (MY_CHECK_RECT_COLL(player, mapColl[tate][yoko]) == TRUE)
-			{
-				if (map[tate][yoko].kind == e)
-				{ 
-
-				}
-			}
-
-		}
-	}
-	return FALSE;
-}
+//BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
+//{
+//	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+//	{
+//		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+//		{
+//			if (MY_CHECK_RECT_COLL(player, mapColl[tate][yoko]) == TRUE)
+//			{
+//				if (map[tate][yoko].kind == e)
+//				{ 
+//
+//				}
+//			}
+//
+//		}
+//	}
+//	return FALSE;
+//}
 //
 //BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT tama[TAMA_MAX])
 //{
