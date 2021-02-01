@@ -66,6 +66,7 @@
 #define MUSIC_END_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3")
 #define MUSIC_CLEAR_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3") //BGMは仮
 #define MUSIC_PLAYER_SHOT_PATH TEXT(".\\MUSIC\\anime_flying.mp3")
+#define MUSIC_PLAYER_MISS_PATH TEXT(".\\MUSIC\\se_maoudamashii_battle07.mp3")
 #define MUSIC_LOAD_ERR_TITLE TEXT("音楽読み込みエラー")
 
 //弾の設定
@@ -235,6 +236,8 @@ typedef struct STRUCT_CHARA
 	BOOL CanShot;				//ショットできるか
 	int ShotReLoadCnt;			//ショットリロード時間
 	int ShotReLoadCntMAX=10;		//ショットリロード時間(MAX)
+
+	MUSIC musicMiss;//敵に当たったときのSE
 
 	BOOL PlayerMISS;//プレイヤーが敵と当たったかどうか
 	int PlayerReLoadCnt;//プレイヤーのリロード時間
@@ -1061,7 +1064,7 @@ VOID MY_PLAY_PROC(VOID)
 				{
 					player.PlayerMISS = FALSE;
 					player_Life--;
-					//ここで当たった時のSE
+					PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
 				}
 
 				if (player_Life < 1)
@@ -1671,6 +1674,15 @@ BOOL(MY_LOAD_MUSIC)(VOID)
 		return FALSE;
 	}
 
+	//プレイヤーダメージ
+	strcpy_s(player.musicMiss.path, MUSIC_PLAYER_MISS_PATH);			//パスの設定
+	player.musicMiss.handle = LoadSoundMem(player.musicMiss.path);		//読み込み
+	if (player.musicMiss.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_PLAYER_MISS_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
 	strcpy_s(END_FAIL_BGM.path, MUSIC_END_BGM_PATH);
 	END_FAIL_BGM.handle = LoadSoundMem(END_FAIL_BGM.path);
 	if (END_FAIL_BGM.handle == -1)
@@ -1694,6 +1706,7 @@ VOID MY_DELETE_MUSIC(VOID)
 	DeleteSoundMem(TITLE.handle);
 	DeleteSoundMem(PLAY_BGM.handle); 
 	DeleteSoundMem(player.musicShot.handle);
+	DeleteSoundMem(player.musicMiss.handle);
 
 	DeleteSoundMem(END_FAIL_BGM.handle);
 	DeleteSoundMem(END_COMP_BGM.handle);
