@@ -1088,15 +1088,12 @@ VOID MY_PLAY_PROC(VOID)
 
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
-		if (player.tama[cnt].IsDraw == TRUE)//’e‚ª‚ ‚é‚Æ‚«‚¾‚¯”»’è‚·‚é
-		{
 			if (MY_CHECK_RECT_COLL(player.tama[cnt].coll,enemy.rect))
 			{
 				player.tama[cnt].IsDraw = FALSE;//“–‚½‚Á‚½‚çÁ‚·
 				enemy.Damage++;
 
 			}
-		}
 
 	}
 
@@ -1219,6 +1216,9 @@ VOID MY_PLAY_DRAW(VOID)
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(255, 0, 0), TRUE);
 	}
 
+	//“G‚Ì‚Ì‚±‚èƒ_ƒ[ƒW
+	DrawFormatString(enemy.image.x, enemy.image.y, GetColor(0, 0, 255), "‚Ì‚±‚è:%d", enemy.DamageMAX- enemy.Damage);
+	
 	//’e‚Ìî•ñ‚ð¶¬
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
