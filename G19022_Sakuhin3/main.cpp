@@ -923,10 +923,6 @@ VOID MY_PLAY_PROC(VOID)
 					player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
 					player.tama[cnt].y = player.image.y;
 
-					//* 横シューティング（プレイヤー右）の場合 *//
-					//player.tama[cnt].x = player.image.x;
-					//player.tama[cnt].y = player.image.y + 40 - player.tama[cnt].height / 2;
-
 
 					//弾当たり判定
 					
@@ -998,11 +994,6 @@ VOID MY_PLAY_PROC(VOID)
 
 	if (enemy.IsDraw == TRUE)
 	{
-		/*◎当たり判定のポイント
-		　・移動する場所を先回りして、当たっているかチェックすること！
-		 　→当たっているのに、スピードが早すぎると「貫通」してしまうことも
-	　	   →プログラム中で、ボールの位置に、ボールのスピードを加減しているのが、先回りの処理
-		*/
 
 		//ボールが画面外にめり込んだ場合(左)
 		if (enemy.rect.left - enemy.YokoSpeed < 0)
@@ -1058,7 +1049,7 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (player.PlayerMISS == TRUE)
 				{
-					player.PlayerMISS = FALSE;
+					player.PlayerMISS = FALSE;//しばらく無敵になる
 					player_Life--;
 					PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
 				}
@@ -1088,14 +1079,18 @@ VOID MY_PLAY_PROC(VOID)
 
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
-			if (MY_CHECK_RECT_COLL(player.tama[cnt].coll,enemy.rect))
+		if (player.tama[cnt].IsDraw == TRUE)
+		{
+			if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy.rect))
 			{
-				player.tama[cnt].IsDraw = FALSE;//当たったら消す
 				enemy.Damage++;
+				player.tama[cnt].IsDraw = FALSE;//当たったら消す
+				PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 
 			}
+		}
 
-	}
+	}//弾と敵が当たったとき…
 
 	if (enemy.Damage >= enemy.DamageMAX)
 	{
@@ -1108,35 +1103,6 @@ VOID MY_PLAY_PROC(VOID)
 		return;
 	}
 
-	//if (MY_CHECK_RECT_COLL(TamaRect, EnemyRect) == TRUE)
-	//{
-	//	if (map[tate][yoko].kind == e)
-	//		map[tate][yoko].kind = n;//敵消したかった
-	//}
-
-	//if (MY_CHECK_RECT_COLL(PlayerRect, EnemyRect) == TRUE)
-	//{
-
-	//	if(player.PlayerMISS == FALSE)
-	//	{
-	//		//ダメージSE
-	//		--player_Life;
-	//		player.PlayerMISS = TRUE;
-	//		//リスポーン処理欲しい
-	//	}//直前に当たってない場合にダメージ処理
-
-	//}
-	//if (player.PlayerMISS == TRUE)//リロードの無敵時間
-	//{
-	//	//リロード時間が終わったとき
-	//	if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
-	//	{
-	//		player.PlayerReLoadCnt = 0;
-	//		player.PlayerMISS = FALSE;
-	//	}
-
-	//	player.PlayerReLoadCnt++;	//リロードする
-	//}
 
 	if (player_Life < 0) //ライフが無くなったらゲームオーバー
 	{
