@@ -8,6 +8,7 @@
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
 #include "resource.h"
+#include "math.h"
 
 #define GAME_WIDTH			800	//画面の横の大きさ
 #define GAME_HEIGHT			600	//画面の縦の大きさ
@@ -66,6 +67,8 @@
 //弾の設定
 #define TAMA_CHANGE_MAX		 5	//5フレーム目で弾の画像を変える
 #define TAMA_MAX			16	//最大16発まで
+#define TAMA_KIND			4	//弾の種類
+
 
 /*弾の画像は仮。自分でちゃんと描いてね*/
 #define TAMA_RED_PATH			TEXT(".\\IMAGE\\TAMA\\tama_image_red.png")		//赤弾の画像
@@ -99,6 +102,7 @@
 
 
 #define ENEMY_SPEED 2
+#define ENEMY_MAX 4
 
 #define START_ERR_TITLE		TEXT("スタート位置エラー")
 #define START_ERR_CAPTION	TEXT("スタート位置が決まっていません")
@@ -215,6 +219,8 @@ typedef struct STRUCT_TAMA
 
 	RECT coll;
 	iPOINT collBeforePt;
+	int Kind;	//弾の種類
+
 }TAMA;	//弾の構造体
 
 
@@ -229,7 +235,7 @@ typedef struct STRUCT_CHARA
 
 	BOOL CanShot;				//ショットできるか
 	int ShotReLoadCnt;			//ショットリロード時間
-	int ShotReLoadCntMAX=10;		//ショットリロード時間(MAX)
+	int ShotReLoadCntMAX = 10;		//ショットリロード時間(MAX)
 
 	MUSIC musicMiss;//敵に当たったときのSE
 
@@ -237,6 +243,7 @@ typedef struct STRUCT_CHARA
 	int PlayerReLoadCnt;//プレイヤーのリロード時間
 	int PlayerReLoadCntMAX = 180;//プレイヤーのリロードにかかる時間（約3秒）
 
+	TAMA moto[TAMA_KIND];
 	TAMA tama[TAMA_MAX];
 
 	RECT coll;
@@ -306,8 +313,8 @@ int GameEndKind;
 
 //プレイヤー関連
 CHARA player; //ゲームのキャラ
-//CHARA enemy;
-ENEMY enemy;
+
+ENEMY enemy[ENEMY_MAX];
 
 int TamaColorKind;//弾の色管理
 
@@ -393,6 +400,9 @@ VOID MY_DELETE_IMAGE(VOID);
 
 BOOL MY_LOAD_MUSIC(VOID);
 VOID MY_DELETE_MUSIC(VOID);
+
+VOID EnemyAtariKeisan(ENEMY* e);
+VOID TamaAtariKeisan(TAMA* tama);
 
 //BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player);
 BOOL MY_CHECK_RECT_COLL(RECT a, RECT b);
@@ -691,26 +701,15 @@ VOID MY_START_PROC(VOID)
 		ChangeVolumeSoundMem(GAME_SOUND_VOLUME, TITLE.handle); //50%の音量
 		PlaySoundMem(TITLE.handle, DX_PLAYTYPE_LOOP); //ループ再生
 	}
-	if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE)
+	if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE
+		|| MY_MOUSE_UP(MOUSE_INPUT_MIDDLE) == TRUE
+		|| MY_MOUSE_UP(MOUSE_INPUT_RIGHT) == TRUE)
 	{
 		//BGMが流れていたら
 		if (CheckSoundMem(TITLE.handle) != 0)
 		{
 			StopSoundMem(TITLE.handle); //止める
 		}
-		//キーボード用↓
-		//プレイヤーの中心位置を計算する
-		//player.CenterX = startPt.x;
-		//player.CenterY = startPt.y;
-
-		////プレイヤーの画像の位置を設定する
-		//player.image.x = player.CenterX;
-		//player.image.y = player.CenterY;
-
-		////プレイヤーの当たる以前の位置を設定する
-		//player.collBeforePt.x = player.CenterX;
-		//player.collBeforePt.y = player.CenterY;
-		/*ここまで*/
 
 		//マウス用↓
 		SetMouseDispFlag(FALSE);
@@ -718,7 +717,7 @@ VOID MY_START_PROC(VOID)
 		startPt.x = GAME_WIDTH / 2;
 		startPt.y = GAME_HEIGHT;
 		//スタート地点をここで決める（真ん中より下あたりがいいな）
-		
+
 		player.CenterX = startPt.x;
 		player.CenterY = startPt.y;
 
@@ -741,15 +740,6 @@ VOID MY_START_PROC(VOID)
 		GameEndKind = GAME_END_FAIL;
 		TamaColorKind = TAMA_COLOR_RED;//初期は赤
 
-		enemy.rect.left = GAME_WIDTH / 2 - enemy.image.width / 2;		//ボールのX位置は画面の中央
-		enemy.rect.top = GAME_HEIGHT / 2 - enemy.image.height / 2;		//ボールのY位置は画面の中央
-		enemy.rect.right = enemy.rect.left + enemy.image.width;				//ボールの幅を初期化
-		enemy.rect.bottom = enemy.rect.top + enemy.image.height;				//ボールの高さを初期化
-
-		enemy.TateSpeed = ENEMY_SPEED;				//縦の速さを初期化
-		enemy.YokoSpeed = ENEMY_SPEED;				//横の速さを初期化
-		enemy.IsDraw = TRUE;							//ボールを表示しない
-
 		//MY_PLAY_INIT(); //ゲーム初期化
 
 		GameScene = GAME_SCENE_PLAY; //プレイ画面に遷移
@@ -761,13 +751,13 @@ VOID MY_START_PROC(VOID)
 
 VOID MY_START_DRAW(VOID)
 {
-	DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT/2, GetColor(0, 255, 255), TRUE);
-	DrawBox(0, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, GetColor(255, 0, 255), TRUE);
+	DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT / 2, GetColor(0, 255, 255), TRUE);
+	DrawBox(0, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, GetColor(255, 0, 255), TRUE);
 
 	DrawString(0, 0, "スタート画面（エンターキーを押してください）", GetColor(255, 255, 255));
 	DrawGraph(ImageTitleROGO.x, ImageTitleROGO.y, ImageTitleROGO.handle, TRUE);
-	
-	DrawStringToHandle(GAME_WIDTH/4, GAME_HEIGHT/2+50, "クリックでスタート！", GetColor(255, 255, 255), FontTanu32.handle);
+
+	DrawStringToHandle(GAME_WIDTH / 4, GAME_HEIGHT / 2 + 50, "クリックでスタート！", GetColor(255, 255, 255), FontTanu32.handle);
 
 	return;
 }
@@ -873,7 +863,7 @@ VOID MY_PLAY_PROC(VOID)
 	PlayerRect.top = player.image.y + 40;
 	PlayerRect.right = player.image.x + player.image.width - 40;
 	PlayerRect.bottom = player.image.y + player.image.height - 40;
-	
+
 
 	//RECT TamaRect[TAMA_MAX] = {0,0,0,0};//弾出すときに値を入れる
 
@@ -891,26 +881,24 @@ VOID MY_PLAY_PROC(VOID)
 	//}
 
 	//ショット
-	//if (MY_MOUSE_UP(MOUSE_INPUT_RIGHT) == TRUE)//右クリックで色変え
-	//{
-	//	if (TamaColorKind != TAMA_COLOR_GREEN)
-	//	{
-	//		TamaColorKind = TAMA_COLOR_GREEN;
-	//	}
-	//	else 
-	//	{
-	//		TamaColorKind = TAMA_COLOR_RED;
-	//	}
-	//		
-	//	
-	//}
+	if (MY_MOUSE_UP(MOUSE_INPUT_RIGHT) == TRUE)//右クリックで色変え
+	{
+		if (TamaColorKind > TAMA_COLOR_YELLOW)
+		{
+			TamaColorKind = TAMA_COLOR_RED;
+		}
+		else 
+		{
+			TamaColorKind++;
+		}
+	}
 
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
 	{
 		//ショットが撃てるとき
 		if (player.CanShot == TRUE)
 		{
-		
+
 			PlaySoundMem(player.musicShot.handle, DX_PLAYTYPE_BACK);
 			player.CanShot = FALSE;
 
@@ -923,17 +911,16 @@ VOID MY_PLAY_PROC(VOID)
 					player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
 					player.tama[cnt].y = player.image.y;
 
-
-					//弾当たり判定
-					
-					//TamaRect[cnt].left = player.tama[cnt].x + 40;
-					//TamaRect[cnt].top = player.tama[cnt].y + 40;
-					//TamaRect[cnt].right = player.tama[cnt].x + player.tama[cnt].width - 40;
-					//TamaRect[cnt].bottom = player.tama[cnt].y + player.tama[cnt].height - 40;
-					//DrawBox(TamaRect[cnt].left, TamaRect[cnt].top, TamaRect[cnt].right, TamaRect[cnt].bottom, GetColor(255, 0, 255), TRUE);
+					//弾当たり判定後付け
+					TamaAtariKeisan(&player.tama[cnt]);
 
 					//色指定
-					//nowImageKind = TAMA_COLOR;
+					for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
+					{
+						//ハンドルをコピー
+						player.tama[cnt].handle[i_num] = player.moto[TamaColorKind].handle[i_num];	//元をコピーする
+					}
+					player.tama[cnt].Kind = TamaColorKind;	//弾の種類を設定自己申告させる
 
 					//弾を描画する
 					player.tama[cnt].IsDraw = TRUE;
@@ -957,14 +944,9 @@ VOID MY_PLAY_PROC(VOID)
 		player.ShotReLoadCnt++;	//リロードする
 	}
 
-
-
+	/* 縦スクロールSTGの背景の流れ方 */
 	for (int num = 0; num < IMAGE_BACK_NUM; num++)
 	{
-
-
-		/* 縦スクロールSTGの背景の流れ方 */
-
 		ImageBack[num].image.y++;
 
 		if (ImageBack[num].IsDraw == FALSE)
@@ -983,55 +965,16 @@ VOID MY_PLAY_PROC(VOID)
 
 	}
 
-	//敵の動き
-	//if (enemy.IsDraw == FALSE)	//ボールが非表示のとき
-	//{
-	//	if (KeyDownState[VK_RETURN] == TRUE)	//エンターキーを押したら(所定の位置に着いたら開始でもいいね)
-	//	{
-	//		enemy.IsDraw = TRUE;	//ボール表示
-	//	}
-	//}
-
-	if (enemy.IsDraw == TRUE)
+	for (int i = 0; i < ENEMY_MAX; i++) 
 	{
+		//敵の強制スクロール
+		enemy[i].image.y += 1;
+		enemy[i].image.x = (GAME_WIDTH / 2 - enemy[i].image.width / 2) + cos(enemy[i].image.y * DX_PI / 180 ) * 100;
+		EnemyAtariKeisan(&enemy[i]);	//当たり判定を計算する関数
+	}
 
-		//ボールが画面外にめり込んだ場合(左)
-		if (enemy.rect.left - enemy.YokoSpeed < 0)
-		{
-			enemy.rect.left = 0 + 1;
-			enemy.rect.right = enemy.rect.left + enemy.image.width + 1;
-
-			enemy.YokoSpeed = -enemy.YokoSpeed;	//向きを反転させる
-		}
-
-		//ボールが画面外にめり込んだ場合(右)
-		if (enemy.rect.right + enemy.YokoSpeed > GAME_WIDTH)
-		{
-			enemy.rect.left = GAME_WIDTH - enemy.image.width - 1;
-			enemy.rect.right = enemy.rect.left + enemy.image.width - 1;
-
-			enemy.YokoSpeed = -enemy.YokoSpeed;	//向きを反転させる
-		}
-
-		//ボールが画面外にめり込んだ場合(上)
-		if (enemy.rect.top - enemy.TateSpeed < 0)
-		{
-			enemy.rect.top = 0 + 1;
-			enemy.rect.bottom = enemy.rect.top + enemy.image.height;
-
-			enemy.TateSpeed = -enemy.TateSpeed;	//向きを反転させる
-		}
-
-		//ボールが画面外にめり込んだ場合(下)
-		if (enemy.rect.bottom + enemy.TateSpeed > GAME_HEIGHT)
-		{
-			enemy.rect.top = GAME_HEIGHT - enemy.image.height - 1;
-			enemy.rect.bottom = enemy.rect.top + enemy.image.height - 1;
-
-			enemy.TateSpeed = -enemy.TateSpeed;	//向きを反転させる
-		}
-
-		//当たったとき（敵とプレイヤー）
+	/*
+	//当たったとき（敵とプレイヤー）
 		if (player.PlayerMISS == FALSE)
 		{
 			//リロード時間が終わったとき
@@ -1045,26 +988,26 @@ VOID MY_PLAY_PROC(VOID)
 		}
 		//敵とプレイヤーが当たったら
 
-			if (MY_CHECK_RECT_COLL(enemy.rect, PlayerRect))
+		if (MY_CHECK_RECT_COLL(enemy.rect, PlayerRect))
+		{
+			if (player.PlayerMISS == TRUE)
 			{
-				if (player.PlayerMISS == TRUE)
-				{
-					player.PlayerMISS = FALSE;//しばらく無敵になる
-					player_Life--;
-					PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
-				}
-
-				if (player_Life < 1)
-				{
-					if (CheckSoundMem(PLAY_BGM.handle) != 0)
-					{
-						StopSoundMem(PLAY_BGM.handle);
-					}
-					GameEndKind = GAME_END_FAIL;
-					GameScene = GAME_SCENE_END;
-				}
-
+				player.PlayerMISS = FALSE;//しばらく無敵になる
+				player_Life--;
+				PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
 			}
+
+			if (player_Life < 1)
+			{
+				if (CheckSoundMem(PLAY_BGM.handle) != 0)
+				{
+					StopSoundMem(PLAY_BGM.handle);
+				}
+				GameEndKind = GAME_END_FAIL;
+				GameScene = GAME_SCENE_END;
+			}
+
+		}
 
 		enemy.rect.left += enemy.YokoSpeed;	//ボールの左上のX位置を移動
 		enemy.rect.right += enemy.YokoSpeed;	//ボールの右下のX位置を移動
@@ -1074,35 +1017,41 @@ VOID MY_PLAY_PROC(VOID)
 
 		enemy.image.x += enemy.YokoSpeed;	//ボールのX位置を移動
 		enemy.image.y += enemy.TateSpeed;	//ボールのY位置を移動
-	}
+	*/
 
-
+	//弾と敵が当たったとき…
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
 		if (player.tama[cnt].IsDraw == TRUE)
 		{
-			if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy.rect))
+			//弾を上に移動させる（縦シューティング）
+			if (player.tama[cnt].y < 0)
 			{
-				enemy.Damage++;
-				player.tama[cnt].IsDraw = FALSE;//当たったら消す
-				PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
-
+				player.tama[cnt].IsDraw = FALSE;	//描画終了
 			}
+			else
+			{
+				player.tama[cnt].y -= player.tama[cnt].speed;
+				TamaAtariKeisan(&player.tama[cnt]);	////弾の当たり判定
+			}
+
+			for (int i = 0; i < ENEMY_MAX; i++)
+			{
+				if (enemy[i].IsDraw == TRUE)
+				{
+					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
+					{
+						enemy[i].Damage++;
+						player.tama[cnt].IsDraw = FALSE;//当たったら消す
+						PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
+
+					}
+				}
+			}
+
 		}
 
-	}//弾と敵が当たったとき…
-
-	if (enemy.Damage >= enemy.DamageMAX)
-	{
-		if (CheckSoundMem(PLAY_BGM.handle) != 0)
-		{
-			StopSoundMem(PLAY_BGM.handle);
-		}
-		GameEndKind = GAME_END_COMP;
-		GameScene = GAME_SCENE_END;
-		return;
 	}
-
 
 	if (player_Life < 0) //ライフが無くなったらゲームオーバー
 	{
@@ -1117,25 +1066,16 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	NowPlayTime = GetNowCount();
-	//if(NowPlayTime-StartTime>=30000&&player_Life>0) //30秒経ったらクリア
-	//{
-	//	if (CheckSoundMem(PLAY_BGM.handle) != 0)
-	//	{
-	//		StopSoundMem(PLAY_BGM.handle);
-	//	}
-	//	GameEndKind = GAME_END_COMP;
-	//	GameScene = GAME_SCENE_END;
-	//	return;
-	//}
 
 
-	if(NowPlayTime-StartTime>=PLAY_TIME&&player_Life>0)
+
+	if (NowPlayTime - StartTime >= PLAY_TIME && player_Life > 0)
 	{
 		if (CheckSoundMem(PLAY_BGM.handle) != 0)
 		{
 			StopSoundMem(PLAY_BGM.handle);
 		}
-		GameEndKind = GAME_END_COMP; 
+		GameEndKind = GAME_END_COMP;
 		GameScene = GAME_SCENE_END;
 		return;
 	} /*デバッグ用*/
@@ -1162,29 +1102,56 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
-	//for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-	//{
-	//	for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-	//	{
-	//		DrawGraph(
-	//			map[tate][yoko].x,
-	//			map[tate][yoko].y,
-	//			mapChip.handle[map[tate][yoko].kind],
-	//			TRUE);
-	//	}
-	//}
+	//画面の中に来たら
+	for (int i = 0; i < ENEMY_MAX; i++)
+	{
+		if (enemy[i].image.y+ enemy[i].image.height >= 0)
+		{
+			enemy[i].IsDraw = TRUE;
+		}
+		else if (enemy[i].image.y >= GAME_HEIGHT)
+		{
+			enemy[i].IsDraw = FALSE;
+		}
+	
 
-	DrawGraph(enemy.image.x, enemy.image.y, enemy.image.handle, TRUE); //プレイヤー表示
+	//敵が表示できるときに
+		if (enemy[i].IsDraw == TRUE)
+		{
+			DrawGraph(enemy[i].image.x, enemy[i].image.y, enemy[i].image.handle, TRUE); //敵表示
+
+			if (TRUE)
+			{
+				DrawBox(
+					enemy[i].image.x,
+					enemy[i].image.y,
+					enemy[i].image.x + enemy[i].image.width,
+					enemy[i].image.y + enemy[i].image.height,
+					GetColor(255, 0, 0),
+					FALSE);//敵の当たり判定デバッグ用
+			}
+
+		}
+	}
+
+
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
+
 	if (player.PlayerMISS == TRUE)//リスポーン中
 	{
 		//自分を点滅させる
 		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(255, 0, 0), TRUE);
 	}
 
-	//敵ののこりダメージ
-	DrawFormatString(enemy.image.x, enemy.image.y, GetColor(0, 0, 255), "のこり:%d", enemy.DamageMAX- enemy.Damage);
-	
+	//敵ののこりダメージ//画面の中に来たら
+	for (int i = 0; i < ENEMY_MAX; i++)
+	{
+		if (enemy[i].IsDraw == TRUE)
+		{
+			DrawFormatString(enemy[i].image.x, enemy[i].image.y, GetColor(0, 0, 255), "のこり:%d", enemy[i].DamageMAX - enemy[i].Damage);
+		}
+	}
+
 	//弾の情報を生成
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
@@ -1197,8 +1164,19 @@ VOID MY_PLAY_DRAW(VOID)
 				player.tama[cnt].y,
 				player.tama[cnt].handle[player.tama[cnt].nowImageKind],	//現在の画像の種類にあったハンドル
 				TRUE);
-			/*nowImageKindにどの色が入るかをパスを指定する（？）*/
 
+			if (TRUE)
+			{
+				DrawBox(
+					player.tama[cnt].coll.left,
+					player.tama[cnt].coll.top,
+					player.tama[cnt].coll.right,
+					player.tama[cnt].coll.bottom,
+					GetColor(0, 255, 0),
+					FALSE);//弾の当たり判定デバッグ用
+			}
+
+			/*nowImageKindにどの色が入るかをパスを指定する（？）*/
 
 			//弾の表示フレームを増やす
 			if (player.tama[cnt].changeImageCnt < player.tama[cnt].changeImageCntMAX)
@@ -1219,46 +1197,19 @@ VOID MY_PLAY_DRAW(VOID)
 
 				player.tama[cnt].changeImageCnt = 0;
 			}
-
-			//弾を上に移動させる（縦シューティング）
-			if (player.tama[cnt].y < 0)
-			{
-				player.tama[cnt].IsDraw = FALSE;	//描画終了
-			}
-			else
-			{
-				player.tama[cnt].y -= player.tama[cnt].speed;
-			}
-
-			if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy.rect))
-			{
-				player.tama[cnt].IsDraw = FALSE;//当たったら消す
-				enemy.Damage++;
-				
-			}
-			//* 横シューティングで右から左に飛ばす場合 *//
-
-			//if (player.tama[cnt].x < 0)
-			//{
-			//	player.tama[cnt].IsDraw = FALSE;
-			//}
-			//else
-			//{
-			//	player.tama[cnt].x -= player.tama[cnt].speed;
-			//}
 		}
 	}
 
 	//デバッグ用（左クリック拾ってるか）
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
 	{
-		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0),TRUE);
+		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0), TRUE);
 	}
 
 	DrawFormatString(
 		GAME_WIDTH - 300,
 		GAME_HEIGHT - 15,
-		GetColor(255, 0, 0), "残り時間: %d 秒", (PLAY_TIME - (NowPlayTime-StartTime))/1000);
+		GetColor(255, 0, 0), "残り時間: %d 秒", (PLAY_TIME - (NowPlayTime - StartTime)) / 1000);
 
 	DrawFormatString(
 		GAME_WIDTH - 550,
@@ -1266,7 +1217,7 @@ VOID MY_PLAY_DRAW(VOID)
 		GetColor(255, 0, 0), "ライフ: %d ", player_Life);
 
 
-	
+
 	return;
 }
 VOID MY_END(VOID)
@@ -1332,7 +1283,7 @@ VOID MY_END_PROC(VOID)
 			}
 			ImageEndFAIL.Cnt = 0;
 		}
-		
+
 		break;
 	}
 	if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE)
@@ -1345,7 +1296,7 @@ VOID MY_END_PROC(VOID)
 		{
 			StopSoundMem(END_COMP_BGM.handle);
 		}
-		
+
 		GameScene = GAME_SCENE_START;
 
 		return;
@@ -1367,7 +1318,7 @@ VOID MY_END_DRAW(VOID)
 		//GAME_WIDTH,
 		//GAME_HEIGHT,
 		//GetColor(255, 255, 255), "正解数：%d 問/全4問中", seikai);
-		DrawStringToHandle(30, 330, "ミッションコンプリート！　クリックでタイトルにもどるよ", GetColor(255, 0, 0), FontTanu32.handle);
+		DrawStringToHandle(30, 400, "ミッションコンプリート！\nクリックでタイトルにもどるよ", GetColor(255, 0, 0), FontTanu32.handle);
 		if (ImageEndCOMP.IsDraw == TRUE)
 		{
 			DrawGraph(ImageEndCOMP.image.x, ImageEndCOMP.image.y, ImageEndCOMP.image.handle, TRUE);
@@ -1409,7 +1360,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 		TAMA_RED_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
 		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
 		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
-		&player.tama[0].handle[0]
+		&player.moto[TAMA_COLOR_RED].handle[0]
 	);
 
 	if (tamaRedRes == -1)
@@ -1417,12 +1368,13 @@ BOOL MY_LOAD_IMAGE(VOID)
 		MessageBox(GetMainWindowHandle(), TAMA_RED_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	GetGraphSize(player.moto[TAMA_COLOR_RED].handle[0], &player.moto[TAMA_COLOR_RED].width, &player.moto[TAMA_COLOR_RED].height);
 
 	int tamaGreenRes = LoadDivGraph(
 		TAMA_GREEN_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
 		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
 		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
-		&player.tama[0].handle[0]
+		&player.moto[TAMA_COLOR_GREEN].handle[0]
 	);
 
 	if (tamaGreenRes == -1)
@@ -1430,12 +1382,13 @@ BOOL MY_LOAD_IMAGE(VOID)
 		MessageBox(GetMainWindowHandle(), TAMA_GREEN_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	GetGraphSize(player.moto[TAMA_COLOR_GREEN].handle[0], &player.moto[TAMA_COLOR_GREEN].width, &player.moto[TAMA_COLOR_GREEN].height);
 
 	int tamaBlueRes = LoadDivGraph(
 		TAMA_BLUE_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
 		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
 		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
-		&player.tama[0].handle[0]
+		&player.moto[TAMA_COLOR_BLUE].handle[0]
 	);
 
 	if (tamaBlueRes == -1)
@@ -1443,12 +1396,14 @@ BOOL MY_LOAD_IMAGE(VOID)
 		MessageBox(GetMainWindowHandle(), TAMA_BLUE_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	GetGraphSize(player.moto[TAMA_COLOR_BLUE].handle[0], &player.moto[TAMA_COLOR_BLUE].width, &player.moto[TAMA_COLOR_BLUE].height);
+
 
 	int tamaYellowRes = LoadDivGraph(
 		TAMA_YELLOW_PATH,/*弾の色（ここではカラーごとに画像を別にしてる）*/
 		TAMA_DIV_NUM, TAMA_DIV_TATE, TAMA_DIV_YOKO,
 		TAMA_DIV_WIDTH, TAMA_DIV_HEIGHT,
-		&player.tama[0].handle[0]
+		&player.moto[TAMA_COLOR_YELLOW].handle[0]
 	);
 
 	if (tamaYellowRes == -1)
@@ -1456,46 +1411,21 @@ BOOL MY_LOAD_IMAGE(VOID)
 		MessageBox(GetMainWindowHandle(), TAMA_YELLOW_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
-
-
-	GetGraphSize(player.tama[0].handle[0], &player.tama[0].width, &player.tama[0].height);
+	GetGraphSize(player.moto[TAMA_COLOR_YELLOW].handle[0], &player.moto[TAMA_COLOR_YELLOW].width, &player.moto[TAMA_COLOR_YELLOW].height);
 
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
-		//パスをコピー
-		//switch (TamaColorKind)
-		//{
-		//case TAMA_COLOR_RED:
-		//	strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));//赤のみの弾画像をパスで渡してる。自分のもそうしてみるか
-		//	break;
-
-		//case TAMA_COLOR_BLUE:
-		//	strcpyDx(player.tama[cnt].path, TEXT(TAMA_BLUE_PATH));
-		//	break;
-
-		//case TAMA_COLOR_GREEN:
-		//	strcpyDx(player.tama[cnt].path, TEXT(TAMA_GREEN_PATH));
-		//	break;
-
-		//case TAMA_COLOR_YELLOW:
-		//	strcpyDx(player.tama[cnt].path, TEXT(TAMA_YELLOW_PATH));
-		//	break;
-
-		//}
-
-		strcpyDx(player.tama[cnt].path, TEXT(TAMA_RED_PATH));//赤のみの弾画像をパスで渡してる。自分のもそうしてみるか
-
 		for (int i_num = 0; i_num < TAMA_DIV_NUM; i_num++)
 		{
 			//ハンドルをコピー
-			player.tama[cnt].handle[i_num] = player.tama[0].handle[i_num];
+			player.tama[cnt].handle[i_num] = player.moto[TAMA_COLOR_RED].handle[i_num];	//元をコピーする
 		}
 
 		//幅をコピー
-		player.tama[cnt].width = player.tama[0].width;
+		player.tama[cnt].width = player.moto[TAMA_COLOR_RED].width;
 
 		//高さをコピー
-		player.tama[cnt].height = player.tama[0].height;
+		player.tama[cnt].height = player.moto[TAMA_COLOR_RED].height;
 
 		//弾のX位置はプレイヤーの中心から発射
 		player.tama[cnt].x = player.CenterX - player.tama[cnt].width / 2;
@@ -1503,12 +1433,8 @@ BOOL MY_LOAD_IMAGE(VOID)
 		//弾のY位置はプレイヤーの上部分から発射
 		player.tama[cnt].y = player.image.y;
 
-		//弾の当たり判定
-		player.tama[cnt].coll.left = player.tama[cnt].x;
-		player.tama[cnt].coll.top = player.tama[cnt].y ;
-		player.tama[cnt].coll.right = player.tama[cnt].x + player.tama[cnt].width;
-		player.tama[cnt].coll.bottom = player.tama[cnt].y + player.tama[cnt].height ;
-
+		//弾の当たり判定先付け
+		TamaAtariKeisan(&player.tama[cnt]);
 
 		//弾は最初は非表示
 		player.tama[cnt].IsDraw = FALSE;
@@ -1545,27 +1471,46 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 
 	/*敵単体*/
-	strcpy_s(enemy.image.path, IMAGE_ENEMY_PATH);
-	enemy.image.handle = LoadGraph(enemy.image.path);
+	strcpy_s(enemy[0].image.path, IMAGE_ENEMY_PATH);
+	enemy[0].image.handle = LoadGraph(enemy[0].image.path);
 
-	if (enemy.image.handle == -1)
+	if (enemy[0].image.handle == -1)
 	{
 		MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
-	GetGraphSize(enemy.image.handle, &enemy.image.width, &enemy.image.height);	//画像の幅と高さを取得
-	enemy.image.x = GAME_WIDTH / 2 - enemy.image.width / 2;		//左右中央揃え
-	enemy.image.y = GAME_HEIGHT / 2 - enemy.image.height / 2;		//上下中央揃え
 
+	int TekiIndex = 0;
+	GetGraphSize(enemy[TekiIndex].image.handle, &enemy[TekiIndex].image.width, &enemy[TekiIndex].image.height);	//画像の幅と高さを取得
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;		//左右中央揃え
+	enemy[TekiIndex].image.y = -10;
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+	enemy[TekiIndex].IsDraw = FALSE;
 
+	//敵のコピー(敵を増やすときは、この処理をコピーしてネ)
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[0];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = -10;
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[0];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = -200;
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[0];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = -500;
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	/*背景*/
 	strcpy_s(ImageBack[0].image.path, IMAGE_PLAY_BK_PATH1);
 	strcpy_s(ImageBack[1].image.path, IMAGE_PLAY_BK_PATH2);
 	strcpy_s(ImageBack[2].image.path, IMAGE_PLAY_BK_PATH3);
 	strcpy_s(ImageBack[3].image.path, IMAGE_PLAY_BK_PATH4);
-
-
 
 	for (int num = 0; num < IMAGE_BACK_NUM; num++)
 	{
@@ -1649,10 +1594,30 @@ BOOL MY_LOAD_IMAGE(VOID)
 	return TRUE;
 }
 
+VOID EnemyAtariKeisan(ENEMY* e)
+{
+	e->rect.left = e->image.x;
+	e->rect.top = e->image.y;
+	e->rect.right = e->image.x + e->image.width;
+	e->rect.bottom = e->image.y + e->image.height;
+
+	return;
+}
+
+VOID TamaAtariKeisan(TAMA* tama)
+{
+	tama->coll.left = tama->x;
+	tama->coll.top = tama->y;
+	tama->coll.right = tama->x + tama->width;
+	tama->coll.bottom = tama->y + tama->height;
+
+	return;
+}
+
 VOID MY_DELETE_IMAGE(VOID)
 {
 	DeleteGraph(ImageTitleROGO.handle);
-	
+
 	//背景
 	for (int num = 0; num < IMAGE_BACK_NUM; num++)
 	{
@@ -1668,7 +1633,11 @@ VOID MY_DELETE_IMAGE(VOID)
 	//}
 
 	DeleteGraph(player.image.handle); //キャラ
-	DeleteGraph(enemy.image.handle); //敵
+
+	for (int i = 0; i < ENEMY_MAX; i++)
+	{
+		DeleteGraph(enemy[i].image.handle); //敵
+	}
 
 	//for (int i_num = 0; i_num < IMAGE_PLAYER_NUM; i_num++)
 	//{
@@ -1736,7 +1705,7 @@ BOOL(MY_LOAD_MUSIC)(VOID)
 VOID MY_DELETE_MUSIC(VOID)
 {
 	DeleteSoundMem(TITLE.handle);
-	DeleteSoundMem(PLAY_BGM.handle); 
+	DeleteSoundMem(PLAY_BGM.handle);
 	DeleteSoundMem(player.musicShot.handle);
 	DeleteSoundMem(player.musicMiss.handle);
 
@@ -1764,30 +1733,6 @@ VOID MY_DELETE_MUSIC(VOID)
 //	return FALSE;
 //}
 //
-//BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT tama[TAMA_MAX])
-//{
-//	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-//	{
-//		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-//		{
-//			for (int cnt = 0; cnt < TAMA_MAX; cnt++)
-//			{
-//				if (MY_CHECK_RECT_COLL(tama[cnt], mapColl[tate][yoko]) == TRUE)
-//				{
-//					if (map[tate][yoko].kind == e)
-//					{
-//						//ここに敵に当たったときの処理書いてみて
-//						map[tate][yoko].kind = n;//敵を消す
-//						//倒した数を足す
-//					}
-//				} /* 弾と敵が当たったとき（まだだめじゃん） */
-//			}
-//
-//
-//		}
-//	}
-//	return FALSE;
-//}一旦これのことは考えない
 
 //球の当たり判定を引数にした球用当たり判定作るか？
 
