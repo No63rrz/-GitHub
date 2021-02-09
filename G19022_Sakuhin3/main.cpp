@@ -22,7 +22,7 @@
 #define GAME_SOUND_VOLUME_PER 30	//%
 #define GAME_SOUND_VOLUME 255 * GAME_SOUND_VOLUME_PER / 100		//↑のパーセントのボリューム
 
-#define PLAY_TIME_SECOND 60		//秒
+#define PLAY_TIME_SECOND 30		//秒
 #define PLAY_TIME PLAY_TIME_SECOND*1000
 
 //マウスのボタン
@@ -93,7 +93,7 @@
 
 
 #define ENEMY_SPEED 2
-#define ENEMY_MAX 10
+#define ENEMY_MAX 20
 
 #define START_ERR_TITLE		TEXT("スタート位置エラー")
 #define START_ERR_CAPTION	TEXT("スタート位置が決まっていません")
@@ -1067,7 +1067,10 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (enemy[i].IsDraw == TRUE)
 				{
-
+					if (enemy[i].DamageMAX - enemy[i].Damage < 0)
+					{
+						enemy[i].IsDraw = FALSE;//当たったら消す
+					}
 
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
 					{
@@ -1078,10 +1081,7 @@ VOID MY_PLAY_PROC(VOID)
 							PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 						}
 
-						if (enemy[i].DamageMAX - enemy[i].Damage < 0)
-						{
-							enemy[i].IsDraw = FALSE;//当たったら消す
-						}
+
 
 					}
 				}
@@ -1180,13 +1180,7 @@ VOID MY_PLAY_DRAW(VOID)
 			player.image.x + player.image.width ,
 			player.image.y + player.image.height , 
 			GetColor(0, 0, 255), 
-			FALSE);
-
-	if (player.PlayerMISS == TRUE)//リスポーン中
-	{
-		//自分を点滅させる
-		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(255, 0, 0), TRUE);
-	}
+			FALSE);//デバッグ用プレイヤー当たり判定
 
 
 	//弾の情報を生成
@@ -1581,7 +1575,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
-	enemy[TekiIndex].image.y = -10;
+	enemy[TekiIndex].image.y = -100;
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
@@ -1633,23 +1627,6 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageBack[3].image.y = 0 - ImageBack[0].image.height * 3;
 	ImageBack[3].IsDraw = FALSE;
 
-	//* 横用 *//
-
-	//ImageBack[0].image.x = 0 - ImageBack[0].image.width * 0;
-	//ImageBack[0].image.y = GAME_HEIGHT / 2 - ImageBack[0].image.height / 2;
-	//ImageBack[0].IsDraw = FALSE;
-
-	//ImageBack[1].image.x = 0 - ImageBack[0].image.width * 1;
-	//ImageBack[1].image.y = GAME_HEIGHT / 2 - ImageBack[1].image.height / 2;
-	//ImageBack[1].IsDraw = FALSE;
-
-	//ImageBack[2].image.x = 0 - ImageBack[0].image.width * 2;
-	//ImageBack[2].image.y = GAME_HEIGHT / 2 - ImageBack[2].image.height / 2;
-	//ImageBack[2].IsDraw = FALSE;
-
-	//ImageBack[3].image.x = 0 - ImageBack[0].image.width * 3;
-	//ImageBack[3].image.y = GAME_HEIGHT / 2 - ImageBack[3].image.height / 2;
-	//ImageBack[3].IsDraw = FALSE;
 
 	//エンドロゴ
 	strcpy_s(ImageEndCOMP.image.path, IMAGE_END_COMP_ROGO_PATH);
