@@ -84,21 +84,8 @@
 
 #define TAMA_DIV_NUM	TAMA_DIV_TATE * TAMA_DIV_YOKO	//画像を分割する総数
 
-//敵マップ
-//#define GAME_MAP_BK_PATH TEXT(".\\IMAGE\\ゲーム背景.png")
-#define GAME_MAP_PATH TEXT(".\\IMAGE\\enemyMAP.png") 
-#define GAME_MAP_TATE_MAX 9
-#define GAME_MAP_YOKO_MAX 13
-#define GAME_MAP_KIND_MAX 2
-
-#define MAP_DIV_WIDTH 64
-#define MAP_DIV_HEIGHT 64
-#define MAP_DIV_TATE 10
-#define MAP_DIV_YOKO 4
-
-#define MAP_DIV_NUM MAP_DIV_TATE*MAP_DIV_YOKO
-
-#define IMAGE_ENEMY_PATH TEXT(".\\IMAGE\\ENEMY.png")
+//敵画像
+#define IMAGE_ENEMY_PATH TEXT(".\\IMAGE\\enemyRed.png")
 
 
 #define ENEMY_SPEED 2
@@ -256,12 +243,14 @@ typedef struct STRUCT_ENEMY
 	IMAGE image;
 
 	RECT rect;
-	int YokoSpeed;
-	int TateSpeed;
+	//int YokoSpeed;
+	//int TateSpeed;
 	BOOL IsDraw;
 
 	int Damage = 0;//現在までに受けた弾の個数
-	int DamageMAX = 100;//100発当てたら終わり
+	int DamageMAX = 3;//回当てたら終わり
+	
+	int Kind;//自分の色
 }ENEMY;
 
 typedef struct STRUCT_IMAGE_BACK
@@ -277,14 +266,14 @@ typedef struct STRUCT_IMAGE_BLINK
 	int CntMAX;
 	BOOL IsDraw;
 }IMAGE_BLINK;
-typedef struct STRUCT_MAP_IMAGE
-{
-	char path[PATH_MAX];
-	int handle[MAP_DIV_NUM];
-	int kind[MAP_DIV_NUM];
-	int width;
-	int height;
-}MAP_CHIP;
+//typedef struct STRUCT_MAP_IMAGE
+//{
+//	char path[PATH_MAX];
+//	int handle[MAP_DIV_NUM];
+//	int kind[MAP_DIV_NUM];
+//	int width;
+//	int height;
+//}MAP_CHIP;
 
 typedef struct STRUCT_MAP
 {
@@ -337,23 +326,23 @@ MUSIC END_COMP_BGM;
 //フォント
 FONT FontTanu32;
 
-GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]
-{
-	//　0,1,2,3,4,5,6,7,8,9,0,1,2,
-		n,n,n,n,n,n,n,n,n,n,n,n,//0
-		n,n,n,n,n,n,n,n,n,n,n,n,//1
-		n,n,n,n,n,n,n,n,n,n,n,n,//2
-		n,n,n,n,n,n,e,n,n,n,n,n,//3
-		n,n,n,n,n,n,n,n,n,n,n,n,//4
-		n,n,n,n,n,n,n,n,n,n,n,n,//5
-		n,n,n,n,n,n,n,n,n,n,n,n,//6
-		n,n,n,n,n,s,n,n,n,n,n,n,//7
-		n,n,n,n,n,n,n,n,n,n,n,n//8
-		//テスト用
-};
-GAME_MAP_KIND mapDataInit[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
-MAP_CHIP mapChip;
-MAP map[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+//GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]
+//{
+//	//　0,1,2,3,4,5,6,7,8,9,0,1,2,
+//		n,n,n,n,n,n,n,n,n,n,n,n,//0
+//		n,n,n,n,n,n,n,n,n,n,n,n,//1
+//		n,n,n,n,n,n,n,n,n,n,n,n,//2
+//		n,n,n,n,n,n,e,n,n,n,n,n,//3
+//		n,n,n,n,n,n,n,n,n,n,n,n,//4
+//		n,n,n,n,n,n,n,n,n,n,n,n,//5
+//		n,n,n,n,n,n,n,n,n,n,n,n,//6
+//		n,n,n,n,n,s,n,n,n,n,n,n,//7
+//		n,n,n,n,n,n,n,n,n,n,n,n//8
+//		//テスト用
+//};
+//GAME_MAP_KIND mapDataInit[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+//MAP_CHIP mapChip;
+//MAP map[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 iPOINT startPt{ -1,-1 };
 //IMAGE MapBack;
 //RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
@@ -828,10 +817,10 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	//当たり判定
-	player.coll.left = player.CenterX - mapChip.width / 2 + 5;
-	player.coll.top = player.CenterY - mapChip.height / 2 + 5;
-	player.coll.right = player.CenterX + mapChip.width / 2 - 5;
-	player.coll.bottom = player.CenterY + mapChip.height / 2 - 5;
+	//player.coll.left = player.CenterX - mapChip.width / 2 + 5;
+	//player.coll.top = player.CenterY - mapChip.height / 2 + 5;
+	//player.coll.right = player.CenterX + mapChip.width / 2 - 5;
+	//player.coll.bottom = player.CenterY + mapChip.height / 2 - 5;
 
 	BOOL IsMove = TRUE;
 
@@ -1019,7 +1008,7 @@ VOID MY_PLAY_PROC(VOID)
 		enemy.image.y += enemy.TateSpeed;	//ボールのY位置を移動
 	*/
 
-	//弾と敵が当たったとき…
+	//弾と敵が当たったとき
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
 		if (player.tama[cnt].IsDraw == TRUE)
@@ -1039,11 +1028,17 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (enemy[i].IsDraw == TRUE)
 				{
+
+
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
 					{
 						enemy[i].Damage++;
 						player.tama[cnt].IsDraw = FALSE;//当たったら消す
 						PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
+						if (enemy[i].DamageMAX - enemy[i].Damage < 0)
+						{
+							enemy[i].IsDraw = FALSE;//当たったら消す
+						}
 
 					}
 				}
@@ -1136,6 +1131,12 @@ VOID MY_PLAY_DRAW(VOID)
 
 
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
+	DrawBox(player.image.x , 
+			player.image.y , 
+			player.image.x + player.image.width ,
+			player.image.y + player.image.height , 
+			GetColor(0, 0, 255), 
+			FALSE);
 
 	if (player.PlayerMISS == TRUE)//リスポーン中
 	{
@@ -1198,12 +1199,6 @@ VOID MY_PLAY_DRAW(VOID)
 				player.tama[cnt].changeImageCnt = 0;
 			}
 		}
-	}
-
-	//デバッグ用（左クリック拾ってるか）
-	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
-	{
-		DrawBox(player.image.x, player.image.y, player.image.x + 10, player.image.y + 10, GetColor(0, 255, 0), TRUE);
 	}
 
 	DrawFormatString(
@@ -1486,6 +1481,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	enemy[TekiIndex].image.y = -10;
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 	enemy[TekiIndex].IsDraw = FALSE;
+	enemy[TekiIndex].Kind = TAMA_COLOR_RED;	//弾の種類を設定自己申告させる
 
 	//敵のコピー(敵を増やすときは、この処理をコピーしてネ)
 	TekiIndex++;
@@ -1493,18 +1489,21 @@ BOOL MY_LOAD_IMAGE(VOID)
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
 	enemy[TekiIndex].image.y = -10;
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+	enemy[TekiIndex].Kind = TAMA_COLOR_RED;	//弾の種類を設定自己申告させる
 
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[0];	//コピー元
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
 	enemy[TekiIndex].image.y = -200;
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+	enemy[TekiIndex].Kind = TAMA_COLOR_RED;	//弾の種類を設定自己申告させる
 
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[0];	//コピー元
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
 	enemy[TekiIndex].image.y = -500;
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+	enemy[TekiIndex].Kind = TAMA_COLOR_RED;	//弾の種類を設定自己申告させる
 
 	/*背景*/
 	strcpy_s(ImageBack[0].image.path, IMAGE_PLAY_BK_PATH1);
