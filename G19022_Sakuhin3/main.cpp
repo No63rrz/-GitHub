@@ -964,6 +964,41 @@ VOID MY_PLAY_PROC(VOID)
 		enemy[i].image.y += 1;
 		enemy[i].image.x = (GAME_WIDTH / 2 - enemy[i].image.width / 2) + cos(enemy[i].image.y * DX_PI / 180 ) * 100;
 		EnemyAtariKeisan(&enemy[i]);	//当たり判定を計算する関数
+
+			//当たったとき（敵とプレイヤー）
+		if (player.PlayerMISS == FALSE)
+		{
+			//リロード時間が終わったとき
+			if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
+			{
+				player.PlayerReLoadCnt = 0;
+				player.PlayerMISS = TRUE;		//生き返り完了
+			}
+
+			player.PlayerReLoadCnt++;	//リロードする
+		}
+		//敵とプレイヤーが当たったら
+
+		if (MY_CHECK_RECT_COLL(enemy[i].rect, PlayerRect))
+		{
+			if (player.PlayerMISS == TRUE)
+			{
+				player.PlayerMISS = FALSE;//しばらく無敵になる
+				player_Life--;
+				PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
+			}
+
+			if (player_Life < 1)
+			{
+				if (CheckSoundMem(PLAY_BGM.handle) != 0)
+				{
+					StopSoundMem(PLAY_BGM.handle);
+				}
+				GameEndKind = GAME_END_FAIL;
+				GameScene = GAME_SCENE_END;
+			}
+
+		}
 	}
 
 	/*
