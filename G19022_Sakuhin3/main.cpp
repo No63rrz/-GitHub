@@ -1171,39 +1171,35 @@ VOID MY_PLAY_DRAW(VOID)
 	switch (TamaColorKind)
 	{
 	case TAMA_COLOR_RED:
-		DrawBox(player.image.x+40,
-			player.image.y+40,
-			player.image.x + player.image.width-40,
-			player.image.y + player.image.height-40,
-			GetColor(255,0,0),
-			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+		DrawCircle(player.CenterX,
+			player.CenterY,
+			player.image.height/2,
+			GetColor(255, 0, 0),
+			TRUE);//今出せる弾の色
 		break;
 
 	case TAMA_COLOR_GREEN:
-		DrawBox(player.image.x + 40,
-			player.image.y + 40,
-			player.image.x + player.image.width - 40,
-			player.image.y + player.image.height - 40,
+		DrawCircle(player.CenterX,
+			player.CenterY,
+			player.image.height / 2,
 			GetColor(0, 255, 0),
-			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+			TRUE);//今出せる弾の色
 		break;
 
 	case TAMA_COLOR_BLUE:
-		DrawBox(player.image.x + 40,
-			player.image.y + 40,
-			player.image.x + player.image.width - 40,
-			player.image.y + player.image.height - 40,
+		DrawCircle(player.CenterX,
+			player.CenterY,
+			player.image.height / 2,
 			GetColor(0, 0, 255),
-			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+			TRUE);//今出せる弾の色
 		break;
 
 	case TAMA_COLOR_YELLOW:
-		DrawBox(player.image.x + 40,
-			player.image.y + 40,
-			player.image.x + player.image.width - 40,
-			player.image.y + player.image.height - 40,
+		DrawCircle(player.CenterX,
+			player.CenterY,
+			player.image.height / 2,
 			GetColor(255, 255, 0),
-			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+			TRUE);//今出せる弾の色
 		break;
 	}
 
@@ -1549,7 +1545,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	
 	/*テスト用にいじる*/
 	enemy[TAMA_COLOR_RED].image.x = 100;		//左右中央揃え
-	enemy[TAMA_COLOR_RED].image.y = -10;
+	enemy[TAMA_COLOR_RED].image.y = TAMA_COLOR_RED * (-100);
 	
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_RED]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_RED].IsDraw = FALSE;
@@ -1561,7 +1557,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//enemy[TAMA_COLOR_GREEN].image.y = enemy[0].image.height-10;
 
 	enemy[TAMA_COLOR_GREEN].image.x = 200;		
-	enemy[TAMA_COLOR_GREEN].image.y = enemy[0].image.height - 10;
+	enemy[TAMA_COLOR_GREEN].image.y = TAMA_COLOR_GREEN * (-100);
 
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_GREEN]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_GREEN].IsDraw = FALSE;
@@ -1574,7 +1570,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//enemy[TAMA_COLOR_BLUE].image.y = enemy[0].image.height -20;
 
 	enemy[TAMA_COLOR_BLUE].image.x = 300;		
-	enemy[TAMA_COLOR_BLUE].image.y = enemy[0].image.height - 20;
+	enemy[TAMA_COLOR_BLUE].image.y = TAMA_COLOR_BLUE * (-100);
 
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_BLUE]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_BLUE].IsDraw = FALSE;
@@ -1586,7 +1582,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//enemy[TAMA_COLOR_YELLOW].image.y = enemy[0].image.height -30;
 
 	enemy[TAMA_COLOR_YELLOW].image.x = 400;
-	enemy[TAMA_COLOR_YELLOW].image.y = enemy[0].image.height - 30;
+	enemy[TAMA_COLOR_YELLOW].image.y = TAMA_COLOR_YELLOW*(-100);
 
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_YELLOW]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_YELLOW].IsDraw = FALSE;
@@ -1606,6 +1602,54 @@ BOOL MY_LOAD_IMAGE(VOID)
 	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
 	enemy[TekiIndex].image.y = TekiIndex*(-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
