@@ -876,14 +876,12 @@ VOID MY_PLAY_PROC(VOID)
 	//ショット
 	if (MY_MOUSE_UP(MOUSE_INPUT_RIGHT) == TRUE)//右クリックで色変え
 	{
-		if (TamaColorKind > TAMA_COLOR_YELLOW)
-		{
-			TamaColorKind = TAMA_COLOR_RED;
-		}
-		else 
-		{
 			TamaColorKind++;
-		}
+
+			if (TamaColorKind > TAMA_COLOR_YELLOW)
+			{
+				TamaColorKind = TAMA_COLOR_RED;
+			}
 	}
 
 	if (MY_MOUSE_DOWN(MOUSE_INPUT_LEFT) == TRUE)
@@ -965,7 +963,7 @@ VOID MY_PLAY_PROC(VOID)
 		enemy[i].image.x = (GAME_WIDTH / 2 - enemy[i].image.width / 2) + cos(enemy[i].image.y * DX_PI / 180 ) * 100;
 		EnemyAtariKeisan(&enemy[i]);	//当たり判定を計算する関数
 
-			//当たったとき（敵とプレイヤー）
+		//当たったとき（敵とプレイヤー）
 		if (player.PlayerMISS == FALSE)
 		{
 			//リロード時間が終わったとき
@@ -977,8 +975,8 @@ VOID MY_PLAY_PROC(VOID)
 
 			player.PlayerReLoadCnt++;	//リロードする
 		}
+		
 		//敵とプレイヤーが当たったら
-
 		if (MY_CHECK_RECT_COLL(enemy[i].rect, PlayerRect))
 		{
 			if (player.PlayerMISS == TRUE)
@@ -1001,53 +999,41 @@ VOID MY_PLAY_PROC(VOID)
 		}
 	}
 
-	/*
-	//当たったとき（敵とプレイヤー）
-		if (player.PlayerMISS == FALSE)
-		{
-			//リロード時間が終わったとき
-			if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
-			{
-				player.PlayerReLoadCnt = 0;
-				player.PlayerMISS = TRUE;		//生き返り完了
-			}
+		////当たったとき（敵とプレイヤー）
+		//if (player.PlayerMISS == FALSE)
+		//{
+		//	//リロード時間が終わったとき
+		//	if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
+		//	{
+		//		player.PlayerReLoadCnt = 0;
+		//		player.PlayerMISS = TRUE;		//生き返り完了
+		//	}
 
-			player.PlayerReLoadCnt++;	//リロードする
-		}
-		//敵とプレイヤーが当たったら
+		//	player.PlayerReLoadCnt++;	//リロードする
+		//}
+		////敵とプレイヤーが当たったら
 
-		if (MY_CHECK_RECT_COLL(enemy.rect, PlayerRect))
-		{
-			if (player.PlayerMISS == TRUE)
-			{
-				player.PlayerMISS = FALSE;//しばらく無敵になる
-				player_Life--;
-				PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
-			}
+		//if (MY_CHECK_RECT_COLL(enemy[i].rect, PlayerRect))
+		//{
+		//	if (player.PlayerMISS == TRUE)
+		//	{
+		//		player.PlayerMISS = FALSE;//しばらく無敵になる
+		//		player_Life--;
+		//		PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
+		//	}
 
-			if (player_Life < 1)
-			{
-				if (CheckSoundMem(PLAY_BGM.handle) != 0)
-				{
-					StopSoundMem(PLAY_BGM.handle);
-				}
-				GameEndKind = GAME_END_FAIL;
-				GameScene = GAME_SCENE_END;
-			}
+		//	if (player_Life < 1)
+		//	{
+		//		if (CheckSoundMem(PLAY_BGM.handle) != 0)
+		//		{
+		//			StopSoundMem(PLAY_BGM.handle);
+		//		}
+		//		GameEndKind = GAME_END_FAIL;
+		//		GameScene = GAME_SCENE_END;
+		//	}
 
-		}
+		//}
 
-		enemy.rect.left += enemy.YokoSpeed;	//ボールの左上のX位置を移動
-		enemy.rect.right += enemy.YokoSpeed;	//ボールの右下のX位置を移動
-
-		enemy.rect.top += enemy.TateSpeed;	//ボールの左上のY位置を移動
-		enemy.rect.bottom += enemy.TateSpeed;	//ボールの右下のY位置を移動
-
-		enemy.image.x += enemy.YokoSpeed;	//ボールのX位置を移動
-		enemy.image.y += enemy.TateSpeed;	//ボールのY位置を移動
-	*/
-
-	//弾と敵が当たったとき
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
 		if (player.tama[cnt].IsDraw == TRUE)
@@ -1067,23 +1053,24 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (enemy[i].IsDraw == TRUE)
 				{
-					if (enemy[i].DamageMAX - enemy[i].Damage < 0)
-					{
-						enemy[i].IsDraw = FALSE;//当たったら消す
-					}
+					//if (enemy[i].DamageMAX< 0)
+					//{
+					//	enemy[i].IsDraw = FALSE;//当たったら消す
+					//}
 
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
 					{
 						if (enemy[i].Kind == player.tama[cnt].Kind)//同色ならダメージをあたえる
 						{
-							enemy[i].Damage++;
+							//enemy[i].Damage++;
+							enemy[i].DamageMAX--;
+
 							player.tama[cnt].IsDraw = FALSE;//当たったら消す
 							PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 						}
-
-
-
 					}
+
+
 				}
 			}
 
@@ -1151,13 +1138,20 @@ VOID MY_PLAY_DRAW(VOID)
 		{
 			enemy[i].IsDraw = FALSE;
 		}
+
+		if (enemy[i].DamageMAX <= 0)
+		{
+			enemy[i].IsDraw = FALSE;//当たったら消す
+		}
 	
 
 	//敵が表示できるときに
 		if (enemy[i].IsDraw == TRUE)
 		{
 			DrawGraph(enemy[i].image.x, enemy[i].image.y, enemy[i].image.handle, TRUE); //敵表示
-			DrawFormatString(enemy[i].image.x, enemy[i].image.y, GetColor(0, 0, 255), "のこり:%d", enemy[i].DamageMAX - enemy[i].Damage);
+			//DrawFormatString(enemy[i].image.x, enemy[i].image.y, GetColor(0, 0, 255), "のこり:%d", enemy[i].DamageMAX - enemy[i].Damage);
+			DrawFormatString(enemy[i].image.x, enemy[i].image.y, GetColor(0, 0, 255), "のこり:%d", enemy[i].DamageMAX);
+
 
 			if (TRUE)
 			{
@@ -1172,15 +1166,47 @@ VOID MY_PLAY_DRAW(VOID)
 
 		}
 	}
+	switch (TamaColorKind)
+	{
+	case TAMA_COLOR_RED:
+		DrawBox(player.image.x,
+			player.image.y,
+			player.image.x + player.image.width,
+			player.image.y + player.image.height,
+			GetColor(255,0,0),
+			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+		break;
 
+	case TAMA_COLOR_GREEN:
+		DrawBox(player.image.x,
+			player.image.y,
+			player.image.x + player.image.width,
+			player.image.y + player.image.height,
+			GetColor(0, 255, 0),
+			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+		break;
+
+	case TAMA_COLOR_BLUE:
+		DrawBox(player.image.x,
+			player.image.y,
+			player.image.x + player.image.width,
+			player.image.y + player.image.height,
+			GetColor(0, 0, 255),
+			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+		break;
+
+	case TAMA_COLOR_YELLOW:
+		DrawBox(player.image.x,
+			player.image.y,
+			player.image.x + player.image.width,
+			player.image.y + player.image.height,
+			GetColor(255, 255, 0),
+			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
+		break;
+	}
 
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE); //プレイヤー表示
-	DrawBox(player.image.x , 
-			player.image.y , 
-			player.image.x + player.image.width ,
-			player.image.y + player.image.height , 
-			GetColor(0, 0, 255), 
-			FALSE);//デバッグ用プレイヤー当たり判定
+
 
 
 	//弾の情報を生成
@@ -1311,21 +1337,23 @@ VOID MY_END_PROC(VOID)
 
 		break;
 	}
-	if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE)
-	{
-		if (CheckSoundMem(END_FAIL_BGM.handle) != 0)
+
+
+		if (MY_MOUSE_UP(MOUSE_INPUT_LEFT) == TRUE)//離した瞬間に
 		{
-			StopSoundMem(END_FAIL_BGM.handle);
-		}
-		else if (CheckSoundMem(END_COMP_BGM.handle) != 0)
-		{
-			StopSoundMem(END_COMP_BGM.handle);
+			if (CheckSoundMem(END_FAIL_BGM.handle) != 0)
+			{
+				StopSoundMem(END_FAIL_BGM.handle);
+			}
+			else if (CheckSoundMem(END_COMP_BGM.handle) != 0)
+			{
+				StopSoundMem(END_COMP_BGM.handle);
+			}
+
+			GameScene = GAME_SCENE_START;
+			return;
 		}
 
-		GameScene = GAME_SCENE_START;
-
-		return;
-	}
 	return;
 }
 
@@ -1588,6 +1616,12 @@ BOOL MY_LOAD_IMAGE(VOID)
 	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
 	enemy[TekiIndex].image.y = -500;
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = -700;
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 
