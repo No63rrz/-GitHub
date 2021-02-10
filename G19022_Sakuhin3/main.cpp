@@ -398,8 +398,6 @@ VOID EnemyAtariKeisan(ENEMY* e);
 VOID TamaAtariKeisan(TAMA* tama);
 
 VOID EnemyAtariDelete(ENEMY* e);
-VOID TamaAtariDelete(TAMA* tama);
-
 
 
 //BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player);
@@ -975,27 +973,31 @@ VOID MY_PLAY_PROC(VOID)
 			player.PlayerReLoadCnt++;	//リロードする
 		}
 		
-		//敵とプレイヤーが当たったら
-		if (MY_CHECK_RECT_COLL(enemy[i].rect, PlayerRect))
+		if (enemy[i].IsDraw == TRUE)
 		{
-			if (player.PlayerMISS == TRUE)
+			//敵とプレイヤーが当たったら
+			if (MY_CHECK_RECT_COLL(enemy[i].rect, PlayerRect))
 			{
-				player.PlayerMISS = FALSE;//しばらく無敵になる
-				player_Life--;
-				PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
-			}
-
-			if (player_Life < 1)
-			{
-				if (CheckSoundMem(PLAY_BGM.handle) != 0)
+				if (player.PlayerMISS == TRUE)
 				{
-					StopSoundMem(PLAY_BGM.handle);
+					player.PlayerMISS = FALSE;//しばらく無敵になる
+					player_Life--;
+					PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
 				}
-				GameEndKind = GAME_END_FAIL;
-				GameScene = GAME_SCENE_END;
-			}
 
+				if (player_Life < 1)
+				{
+					if (CheckSoundMem(PLAY_BGM.handle) != 0)
+					{
+						StopSoundMem(PLAY_BGM.handle);
+					}
+					GameEndKind = GAME_END_FAIL;
+					GameScene = GAME_SCENE_END;
+				}
+
+			}
 		}
+
 	}
 
 		////当たったとき（敵とプレイヤー）
@@ -1052,10 +1054,9 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (enemy[i].IsDraw == TRUE)
 				{
-					if (enemy[i].DamageMAX< 0)
+					if (enemy[i].DamageMAX < 1)
 					{
-						enemy[i].IsDraw = FALSE;//当たったら消す
-						EnemyAtariDelete(&enemy[i]);//判定を消す
+						EnemyAtariDelete(&enemy[i]);
 					}
 
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
@@ -1063,13 +1064,13 @@ VOID MY_PLAY_PROC(VOID)
 						if (enemy[i].Kind == player.tama[cnt].Kind)//同色ならダメージをあたえる
 						{
 							//enemy[i].Damage++;
-							enemy[i].DamageMAX--;
+							--enemy[i].DamageMAX;
 
 							player.tama[cnt].IsDraw = FALSE;//当たったら消す
-							TamaAtariDelete(&player.tama[cnt]);//判定を消す
 							PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 						}
 					}
+
 
 
 				}
@@ -1140,15 +1141,18 @@ VOID MY_PLAY_DRAW(VOID)
 			enemy[i].IsDraw = FALSE;
 		}
 
-
-	
-
+		if (enemy[i].DamageMAX < 1)
+		{
+			enemy[i].IsDraw = FALSE;//当たったら消す
+		}
 	//敵が表示できるときに
 		if (enemy[i].IsDraw == TRUE)
 		{
+
 			DrawGraph(enemy[i].image.x, enemy[i].image.y, enemy[i].image.handle, TRUE); //敵表示
 			//DrawFormatString(enemy[i].image.x, enemy[i].image.y, GetColor(0, 0, 255), "のこり:%d", enemy[i].DamageMAX - enemy[i].Damage);
 			DrawFormatString(enemy[i].image.x, enemy[i].image.y, GetColor(0, 0, 255), "のこり:%d", enemy[i].DamageMAX);
+		
 
 
 			if (TRUE)
@@ -1740,23 +1744,14 @@ VOID TamaAtariKeisan(TAMA* tama)
 
 VOID EnemyAtariDelete(ENEMY* e)
 {
-	e->rect.left = -1;
-	e->rect.top = -1;
-	e->rect.right = -1;
-	e->rect.bottom = -1;
+	e->rect.left = -10;
+	e->rect.top = -10;
+	e->rect.right = -10;
+	e->rect.bottom = -10;
 
 	return;
 }
 
-VOID TamaAtariDelete(TAMA* tama)
-{
-	tama->coll.left = -1;
-	tama->coll.top = -1;
-	tama->coll.right = -1;
-	tama->coll.bottom = -1;
-
-	return;
-}
 
 VOID MY_DELETE_IMAGE(VOID)
 {
