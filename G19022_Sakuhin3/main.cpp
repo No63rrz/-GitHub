@@ -397,6 +397,11 @@ VOID MY_DELETE_MUSIC(VOID);
 VOID EnemyAtariKeisan(ENEMY* e);
 VOID TamaAtariKeisan(TAMA* tama);
 
+VOID EnemyAtariDelete(ENEMY* e);
+VOID TamaAtariDelete(TAMA* tama);
+
+
+
 //BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player);
 BOOL MY_CHECK_RECT_COLL(RECT a, RECT b);
 //########## プログラムで最初に実行される関数 ##########
@@ -820,12 +825,6 @@ VOID MY_PLAY_PROC(VOID)
 		}
 	}
 
-	//当たり判定
-	//player.coll.left = player.CenterX - mapChip.width / 2 + 5;
-	//player.coll.top = player.CenterY - mapChip.height / 2 + 5;
-	//player.coll.right = player.CenterX + mapChip.width / 2 - 5;
-	//player.coll.bottom = player.CenterY + mapChip.height / 2 - 5;
-
 	BOOL IsMove = TRUE;
 
 	//if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
@@ -1053,10 +1052,11 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (enemy[i].IsDraw == TRUE)
 				{
-					//if (enemy[i].DamageMAX< 0)
-					//{
-					//	enemy[i].IsDraw = FALSE;//当たったら消す
-					//}
+					if (enemy[i].DamageMAX< 0)
+					{
+						enemy[i].IsDraw = FALSE;//当たったら消す
+						EnemyAtariDelete(&enemy[i]);//判定を消す
+					}
 
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
 					{
@@ -1066,6 +1066,7 @@ VOID MY_PLAY_PROC(VOID)
 							enemy[i].DamageMAX--;
 
 							player.tama[cnt].IsDraw = FALSE;//当たったら消す
+							TamaAtariDelete(&player.tama[cnt]);//判定を消す
 							PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 						}
 					}
@@ -1139,10 +1140,7 @@ VOID MY_PLAY_DRAW(VOID)
 			enemy[i].IsDraw = FALSE;
 		}
 
-		if (enemy[i].DamageMAX <= 0)
-		{
-			enemy[i].IsDraw = FALSE;//当たったら消す
-		}
+
 	
 
 	//敵が表示できるときに
@@ -1169,37 +1167,37 @@ VOID MY_PLAY_DRAW(VOID)
 	switch (TamaColorKind)
 	{
 	case TAMA_COLOR_RED:
-		DrawBox(player.image.x,
-			player.image.y,
-			player.image.x + player.image.width,
-			player.image.y + player.image.height,
+		DrawBox(player.image.x+40,
+			player.image.y+40,
+			player.image.x + player.image.width-40,
+			player.image.y + player.image.height-40,
 			GetColor(255,0,0),
 			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
 		break;
 
 	case TAMA_COLOR_GREEN:
-		DrawBox(player.image.x,
-			player.image.y,
-			player.image.x + player.image.width,
-			player.image.y + player.image.height,
+		DrawBox(player.image.x + 40,
+			player.image.y + 40,
+			player.image.x + player.image.width - 40,
+			player.image.y + player.image.height - 40,
 			GetColor(0, 255, 0),
 			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
 		break;
 
 	case TAMA_COLOR_BLUE:
-		DrawBox(player.image.x,
-			player.image.y,
-			player.image.x + player.image.width,
-			player.image.y + player.image.height,
+		DrawBox(player.image.x + 40,
+			player.image.y + 40,
+			player.image.x + player.image.width - 40,
+			player.image.y + player.image.height - 40,
 			GetColor(0, 0, 255),
 			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
 		break;
 
 	case TAMA_COLOR_YELLOW:
-		DrawBox(player.image.x,
-			player.image.y,
-			player.image.x + player.image.width,
-			player.image.y + player.image.height,
+		DrawBox(player.image.x + 40,
+			player.image.y + 40,
+			player.image.x + player.image.width - 40,
+			player.image.y + player.image.height - 40,
 			GetColor(255, 255, 0),
 			TRUE);//デバッグ用プレイヤー当たり判定＆今出せる弾の色
 		break;
@@ -1603,25 +1601,49 @@ BOOL MY_LOAD_IMAGE(VOID)
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
-	enemy[TekiIndex].image.y = -100;
+	enemy[TekiIndex].image.y = TekiIndex*(-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
-	enemy[TekiIndex].image.y = -200;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
-	enemy[TekiIndex].image.y = -500;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
 	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
-	enemy[TekiIndex].image.y = -700;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
+	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
+
+	TekiIndex++;
+	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
+	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 
@@ -1712,6 +1734,26 @@ VOID TamaAtariKeisan(TAMA* tama)
 	tama->coll.top = tama->y;
 	tama->coll.right = tama->x + tama->width;
 	tama->coll.bottom = tama->y + tama->height;
+
+	return;
+}
+
+VOID EnemyAtariDelete(ENEMY* e)
+{
+	e->rect.left = -1;
+	e->rect.top = -1;
+	e->rect.right = -1;
+	e->rect.bottom = -1;
+
+	return;
+}
+
+VOID TamaAtariDelete(TAMA* tama)
+{
+	tama->coll.left = -1;
+	tama->coll.top = -1;
+	tama->coll.right = -1;
+	tama->coll.bottom = -1;
 
 	return;
 }
@@ -1815,28 +1857,6 @@ VOID MY_DELETE_MUSIC(VOID)
 	DeleteSoundMem(END_COMP_BGM.handle);
 	return;
 }
-
-//BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
-//{
-//	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-//	{
-//		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-//		{
-//			if (MY_CHECK_RECT_COLL(player, mapColl[tate][yoko]) == TRUE)
-//			{
-//				if (map[tate][yoko].kind == e)
-//				{ 
-//
-//				}
-//			}
-//
-//		}
-//	}
-//	return FALSE;
-//}
-//
-
-//球の当たり判定を引数にした球用当たり判定作るか？
 
 BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
 {
