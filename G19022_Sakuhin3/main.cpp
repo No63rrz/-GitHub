@@ -758,7 +758,7 @@ VOID MY_START_DRAW(VOID)
 	DrawBox(0, 0, GAME_WIDTH, GAME_HEIGHT / 2, GetColor(0, 255, 255), TRUE);
 	DrawBox(0, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, GetColor(255, 0, 255), TRUE);
 
-	DrawString(0, 0, "スタート画面（エンターキーを押してください）", GetColor(255, 255, 255));
+	//DrawString(0, 0, "スタート画面（エンターキーを押してください）", GetColor(255, 255, 255));
 	DrawGraph(ImageTitleROGO.x, ImageTitleROGO.y, ImageTitleROGO.handle, TRUE);
 
 	DrawStringToHandle(GAME_WIDTH / 4, GAME_HEIGHT / 2 + 50, "クリックでスタート！", GetColor(255, 255, 255), FontTanu32.handle);
@@ -783,7 +783,6 @@ VOID MY_PLAY(VOID)
 {
 	MY_PLAY_PROC();
 	MY_PLAY_DRAW();
-	DrawString(0, 0, "プレイ画面(escでエンド画面)", GetColor(255, 255, 255));
 
 	return;
 }
@@ -1524,10 +1523,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	}
 	//赤の敵
 	GetGraphSize(enemy[TAMA_COLOR_RED].image.handle, &enemy[TAMA_COLOR_RED].image.width, &enemy[TAMA_COLOR_RED].image.height);	//画像の幅と高さを取得
-	//enemy[TAMA_COLOR_RED].image.x = GAME_WIDTH / 2 - enemy[TAMA_COLOR_RED].image.width / 2;		//左右中央揃え
-	//enemy[TAMA_COLOR_RED].image.y = -10;
 	
-	/*テスト用にいじる*/
 	enemy[TAMA_COLOR_RED].image.x = 100;
 	enemy[TAMA_COLOR_RED].image.y = TAMA_COLOR_RED * (-100);
 	
@@ -1537,8 +1533,6 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 	//緑の敵
 	GetGraphSize(enemy[TAMA_COLOR_GREEN].image.handle, &enemy[TAMA_COLOR_GREEN].image.width, &enemy[TAMA_COLOR_GREEN].image.height);	//画像の幅と高さを取得
-	//enemy[TAMA_COLOR_GREEN].image.x = GAME_WIDTH / 2 - enemy[TAMA_COLOR_GREEN].image.width / 2;		//左右中央揃え
-	//enemy[TAMA_COLOR_GREEN].image.y = enemy[0].image.height-10;
 
 	enemy[TAMA_COLOR_GREEN].image.x = 200;		
 	enemy[TAMA_COLOR_GREEN].image.y = TAMA_COLOR_GREEN * (-100);
@@ -1550,8 +1544,6 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 	//青の敵
 	GetGraphSize(enemy[TAMA_COLOR_BLUE].image.handle, &enemy[TAMA_COLOR_BLUE].image.width, &enemy[TAMA_COLOR_BLUE].image.height);	//画像の幅と高さを取得
-	//enemy[TAMA_COLOR_BLUE].image.x = GAME_WIDTH / 2 - enemy[TAMA_COLOR_BLUE].image.width / 2;		//左右中央揃え
-	//enemy[TAMA_COLOR_BLUE].image.y = enemy[0].image.height -20;
 
 	enemy[TAMA_COLOR_BLUE].image.x = 300;		
 	enemy[TAMA_COLOR_BLUE].image.y = TAMA_COLOR_BLUE * (-100);
@@ -1562,8 +1554,6 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 	//黄色の敵
 	GetGraphSize(enemy[TAMA_COLOR_YELLOW].image.handle, &enemy[TAMA_COLOR_YELLOW].image.width, &enemy[TAMA_COLOR_YELLOW].image.height);	//画像の幅と高さを取得
-	//enemy[TAMA_COLOR_YELLOW].image.x = GAME_WIDTH / 2 - enemy[TAMA_COLOR_YELLOW].image.width / 2;		//左右中央揃え
-	//enemy[TAMA_COLOR_YELLOW].image.y = enemy[0].image.height -30;
 
 	enemy[TAMA_COLOR_YELLOW].image.x = 400;
 	enemy[TAMA_COLOR_YELLOW].image.y = TAMA_COLOR_YELLOW*(-100);
@@ -1571,6 +1561,8 @@ BOOL MY_LOAD_IMAGE(VOID)
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_YELLOW]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_YELLOW].IsDraw = FALSE;
 	enemy[TAMA_COLOR_YELLOW].Kind = TAMA_COLOR_YELLOW;	//弾の種類を設定自己申告させる
+
+
 
 	//int TekiIndex = 0;
 	//GetGraphSize(enemy[TekiIndex].image.handle, &enemy[TekiIndex].image.width, &enemy[TekiIndex].image.height);	//画像の幅と高さを取得
@@ -1727,7 +1719,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	GetGraphSize(ImageEndCOMP.image.handle, &ImageEndCOMP.image.width, &ImageEndCOMP.image.height);
 
 	ImageEndCOMP.image.x = GAME_WIDTH / 2 - ImageEndCOMP.image.width / 2;
-	ImageEndCOMP.image.y = GAME_HEIGHT / 2 - ImageEndCOMP.image.height / 2;
+	ImageEndCOMP.image.y = (GAME_HEIGHT / 2 - ImageEndCOMP.image.height / 2)-50;
 	ImageEndCOMP.Cnt = 0.0;
 	ImageEndCOMP.CntMAX = IMAGE_END_COMP_CNT_MAX;
 	ImageEndCOMP.IsDraw = FALSE;
@@ -1868,7 +1860,7 @@ BOOL(MY_LOAD_MUSIC)(VOID)
 		return FALSE;
 	}
 
-	strcpy_s(END_COMP_BGM.path, MUSIC_END_BGM_PATH);
+	strcpy_s(END_COMP_BGM.path, MUSIC_CLEAR_BGM_PATH);
 	END_COMP_BGM.handle = LoadSoundMem(END_COMP_BGM.path);
 	if (END_COMP_BGM.handle == -1)
 	{
