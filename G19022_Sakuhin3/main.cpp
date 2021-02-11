@@ -968,8 +968,8 @@ VOID MY_PLAY_PROC(VOID)
 		}
 		//敵の強制スクロール
 		enemy[i].image.y += 1;
-		//enemy[i].image.x = (GAME_WIDTH / 2 - enemy[i].image.width / 2) + cos(enemy[i].image.y * DX_PI / 180 ) * 100;
 		enemy[i].image.x = enemy[i].Tatejiku + cos(enemy[i].image.y * DX_PI / 180) * 100;
+		
 
 		EnemyAtariKeisan(&enemy[i]);	//当たり判定を計算する関数
 
@@ -1010,7 +1010,6 @@ VOID MY_PLAY_PROC(VOID)
 
 			}
 		}
-
 	}
 
 
@@ -1031,13 +1030,10 @@ VOID MY_PLAY_PROC(VOID)
 
 			for (int i = 0; i < ENEMY_MAX; i++)
 			{
+
 				if (enemy[i].IsDraw == TRUE)
 				{
-					if (enemy[i].DamageMAX < 1)
-					{
-						EnemyAtariDelete(&enemy[i]);
-						KnockDown++;//倒した敵の数を増やす
-					}
+
 
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
 					{
@@ -1045,20 +1041,25 @@ VOID MY_PLAY_PROC(VOID)
 						{
 							//enemy[i].Damage++;
 							--enemy[i].DamageMAX;//敵のHPを減らす
-							
+							if (enemy[i].DamageMAX < 1)
+							{
+								EnemyAtariDelete(&enemy[i]);
+								enemy[i].IsDraw = FALSE;
+								KnockDown++;
+							}
 							player.tama[cnt].IsDraw = FALSE;//当たったら消す
 							PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 						}
 					}
 
-
-
 				}
+
 			}
 
 		}
 
 	}
+
 
 	if (player_Life < 0) //ライフが無くなったらゲームオーバー
 	{
@@ -1526,6 +1527,8 @@ BOOL MY_LOAD_IMAGE(VOID)
 	
 	enemy[TAMA_COLOR_RED].image.x = 100;
 	enemy[TAMA_COLOR_RED].image.y = TAMA_COLOR_RED * (-100);
+
+
 	
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_RED]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_RED].IsDraw = FALSE;
@@ -1534,8 +1537,9 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//緑の敵
 	GetGraphSize(enemy[TAMA_COLOR_GREEN].image.handle, &enemy[TAMA_COLOR_GREEN].image.width, &enemy[TAMA_COLOR_GREEN].image.height);	//画像の幅と高さを取得
 
-	enemy[TAMA_COLOR_GREEN].image.x = 200;		
+	enemy[TAMA_COLOR_GREEN].image.x = 250;
 	enemy[TAMA_COLOR_GREEN].image.y = TAMA_COLOR_GREEN * (-100);
+
 
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_GREEN]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_GREEN].IsDraw = FALSE;
@@ -1545,8 +1549,9 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//青の敵
 	GetGraphSize(enemy[TAMA_COLOR_BLUE].image.handle, &enemy[TAMA_COLOR_BLUE].image.width, &enemy[TAMA_COLOR_BLUE].image.height);	//画像の幅と高さを取得
 
-	enemy[TAMA_COLOR_BLUE].image.x = 300;		
+	enemy[TAMA_COLOR_BLUE].image.x = 400;
 	enemy[TAMA_COLOR_BLUE].image.y = TAMA_COLOR_BLUE * (-100);
+
 
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_BLUE]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_BLUE].IsDraw = FALSE;
@@ -1555,8 +1560,10 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//黄色の敵
 	GetGraphSize(enemy[TAMA_COLOR_YELLOW].image.handle, &enemy[TAMA_COLOR_YELLOW].image.width, &enemy[TAMA_COLOR_YELLOW].image.height);	//画像の幅と高さを取得
 
-	enemy[TAMA_COLOR_YELLOW].image.x = 400;
+	enemy[TAMA_COLOR_YELLOW].image.x = 550;
 	enemy[TAMA_COLOR_YELLOW].image.y = TAMA_COLOR_YELLOW*(-100);
+
+
 
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_YELLOW]);	//当たり判定を計算する関数
 	enemy[TAMA_COLOR_YELLOW].IsDraw = FALSE;
@@ -1573,6 +1580,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//enemy[TekiIndex].Kind = TAMA_COLOR_RED;	//弾の種類を設定自己申告させる
 
 	////敵のコピー(敵を増やすときは、この処理をコピーしてネ)
+
 	int TekiIndex = TAMA_COLOR_YELLOW;
 	TekiIndex++;
 	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
