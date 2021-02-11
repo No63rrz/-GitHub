@@ -59,9 +59,11 @@
 #define MUSIC_TITLE_BGM_PATH TEXT(".\\MUSIC\\loop_33.wav")
 #define MUSIC_PLAY_BGM_PATH TEXT(".\\MUSIC\\fruitsparfait.mp3")
 #define MUSIC_END_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3")
-#define MUSIC_CLEAR_BGM_PATH TEXT(".\\MUSIC\\ほのぼのゲームオーバー.mp3") //BGMは仮
+#define MUSIC_CLEAR_BGM_PATH TEXT(".\\MUSIC\\レベルが上がったり何かをクリアした時の短いジングル.mp3") //BGMは仮
 #define MUSIC_PLAYER_SHOT_PATH TEXT(".\\MUSIC\\anime_flying.mp3")
 #define MUSIC_PLAYER_MISS_PATH TEXT(".\\MUSIC\\se_maoudamashii_battle07.mp3")
+#define MUSIC_DAMAGE_PATH TEXT(".\\MUSIC\\「うっ！」.mp3")
+
 #define MUSIC_LOAD_ERR_TITLE TEXT("音楽読み込みエラー")
 
 //弾の設定
@@ -228,11 +230,14 @@ typedef struct STRUCT_CHARA
 	int ShotReLoadCnt;			//ショットリロード時間
 	int ShotReLoadCntMAX = 10;		//ショットリロード時間(MAX)
 
-	MUSIC musicMiss;//敵に当たったときのSE
+	MUSIC musicMiss;//敵に弾が当たったときのSE
+	MUSIC musicDamage;//自分が当たったときのSE
 
 	BOOL PlayerMISS;//プレイヤーが敵と当たったかどうか
 	int PlayerReLoadCnt;//プレイヤーのリロード時間
 	int PlayerReLoadCntMAX = 180;//プレイヤーのリロードにかかる時間（約3秒）
+
+	
 
 	TAMA moto[TAMA_KIND];
 	TAMA tama[TAMA_MAX];
@@ -255,6 +260,8 @@ typedef struct STRUCT_ENEMY
 	int DamageMAX = 3;//回当てたら終わり
 	
 	int Kind;//自分の色
+
+	int Tatejiku = -1;//初期のx軸
 }ENEMY;
 
 typedef struct STRUCT_IMAGE_BACK
@@ -351,7 +358,8 @@ iPOINT startPt{ -1,-1 };
 //IMAGE MapBack;
 //RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
 
-int player_Life;
+int KnockDown;//倒した敵の数
+int player_Life;//プレイヤーのライフ
 int StartTime;//プレイ開始時の現在時刻
 int NowPlayTime;
 
@@ -735,7 +743,7 @@ VOID MY_START_PROC(VOID)
 		}
 		GameEndKind = GAME_END_FAIL;
 		TamaColorKind = TAMA_COLOR_RED;//初期は赤
-
+		KnockDown = 0;
 		//MY_PLAY_INIT(); //ゲーム初期化
 
 		GameScene = GAME_SCENE_PLAY; //プレイ画面に遷移
@@ -955,9 +963,15 @@ VOID MY_PLAY_PROC(VOID)
 
 	for (int i = 0; i < ENEMY_MAX; i++) 
 	{
+		if (enemy[i].Tatejiku < 0)//まだ決まっていなかったら決める
+		{
+			enemy[i].Tatejiku = GetRand(GAME_WIDTH);
+		}
 		//敵の強制スクロール
 		enemy[i].image.y += 1;
-		enemy[i].image.x = (GAME_WIDTH / 2 - enemy[i].image.width / 2) + cos(enemy[i].image.y * DX_PI / 180 ) * 100;
+		//enemy[i].image.x = (GAME_WIDTH / 2 - enemy[i].image.width / 2) + cos(enemy[i].image.y * DX_PI / 180 ) * 100;
+		enemy[i].image.x = enemy[i].Tatejiku + cos(enemy[i].image.y * DX_PI / 180) * 100;
+
 		EnemyAtariKeisan(&enemy[i]);	//当たり判定を計算する関数
 
 		//当たったとき（敵とプレイヤー）
@@ -982,58 +996,24 @@ VOID MY_PLAY_PROC(VOID)
 				{
 					player.PlayerMISS = FALSE;//しばらく無敵になる
 					player_Life--;
-					PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
+					PlaySoundMem(player.musicDamage.handle, DX_PLAYTYPE_BACK);
 				}
 
-				if (player_Life < 1)
-				{
-					if (CheckSoundMem(PLAY_BGM.handle) != 0)
-					{
-						StopSoundMem(PLAY_BGM.handle);
-					}
-					GameEndKind = GAME_END_FAIL;
-					GameScene = GAME_SCENE_END;
-				}
+				//if (player_Life < 1)
+				//{
+				//	if (CheckSoundMem(PLAY_BGM.handle) != 0)
+				//	{
+				//		StopSoundMem(PLAY_BGM.handle);
+				//	}
+				//	GameEndKind = GAME_END_FAIL;
+				//	GameScene = GAME_SCENE_END;
+				//}
 
 			}
 		}
 
 	}
 
-		////当たったとき（敵とプレイヤー）
-		//if (player.PlayerMISS == FALSE)
-		//{
-		//	//リロード時間が終わったとき
-		//	if (player.PlayerReLoadCnt == player.PlayerReLoadCntMAX)
-		//	{
-		//		player.PlayerReLoadCnt = 0;
-		//		player.PlayerMISS = TRUE;		//生き返り完了
-		//	}
-
-		//	player.PlayerReLoadCnt++;	//リロードする
-		//}
-		////敵とプレイヤーが当たったら
-
-		//if (MY_CHECK_RECT_COLL(enemy[i].rect, PlayerRect))
-		//{
-		//	if (player.PlayerMISS == TRUE)
-		//	{
-		//		player.PlayerMISS = FALSE;//しばらく無敵になる
-		//		player_Life--;
-		//		PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);
-		//	}
-
-		//	if (player_Life < 1)
-		//	{
-		//		if (CheckSoundMem(PLAY_BGM.handle) != 0)
-		//		{
-		//			StopSoundMem(PLAY_BGM.handle);
-		//		}
-		//		GameEndKind = GAME_END_FAIL;
-		//		GameScene = GAME_SCENE_END;
-		//	}
-
-		//}
 
 	for (int cnt = 0; cnt < TAMA_MAX; cnt++)
 	{
@@ -1057,6 +1037,7 @@ VOID MY_PLAY_PROC(VOID)
 					if (enemy[i].DamageMAX < 1)
 					{
 						EnemyAtariDelete(&enemy[i]);
+						KnockDown++;//倒した敵の数を増やす
 					}
 
 					if (MY_CHECK_RECT_COLL(player.tama[cnt].coll, enemy[i].rect))//ここで判定してるけど…
@@ -1064,8 +1045,8 @@ VOID MY_PLAY_PROC(VOID)
 						if (enemy[i].Kind == player.tama[cnt].Kind)//同色ならダメージをあたえる
 						{
 							//enemy[i].Damage++;
-							--enemy[i].DamageMAX;
-
+							--enemy[i].DamageMAX;//敵のHPを減らす
+							
 							player.tama[cnt].IsDraw = FALSE;//当たったら消す
 							PlaySoundMem(player.musicMiss.handle, DX_PLAYTYPE_BACK);//ダメージ音
 						}
@@ -1155,16 +1136,16 @@ VOID MY_PLAY_DRAW(VOID)
 		
 
 
-			if (TRUE)
-			{
-				DrawBox(
-					enemy[i].image.x,
-					enemy[i].image.y,
-					enemy[i].image.x + enemy[i].image.width,
-					enemy[i].image.y + enemy[i].image.height,
-					GetColor(255, 0, 0),
-					FALSE);//敵の当たり判定デバッグ用
-			}
+			//if (TRUE)
+			//{
+			//	DrawBox(
+			//		enemy[i].image.x,
+			//		enemy[i].image.y,
+			//		enemy[i].image.x + enemy[i].image.width,
+			//		enemy[i].image.y + enemy[i].image.height,
+			//		GetColor(255, 0, 0),
+			//		FALSE);//敵の当たり判定デバッグ用
+			//}
 
 		}
 	}
@@ -1220,16 +1201,16 @@ VOID MY_PLAY_DRAW(VOID)
 				player.tama[cnt].handle[player.tama[cnt].nowImageKind],	//現在の画像の種類にあったハンドル
 				TRUE);
 
-			if (TRUE)
-			{
-				DrawBox(
-					player.tama[cnt].coll.left,
-					player.tama[cnt].coll.top,
-					player.tama[cnt].coll.right,
-					player.tama[cnt].coll.bottom,
-					GetColor(0, 255, 0),
-					FALSE);//弾の当たり判定デバッグ用
-			}
+			//if (TRUE)
+			//{
+			//	DrawBox(
+			//		player.tama[cnt].coll.left,
+			//		player.tama[cnt].coll.top,
+			//		player.tama[cnt].coll.right,
+			//		player.tama[cnt].coll.bottom,
+			//		GetColor(0, 255, 0),
+			//		FALSE);//弾の当たり判定デバッグ用
+			//}
 
 			/*nowImageKindにどの色が入るかをパスを指定する（？）*/
 
@@ -1263,7 +1244,12 @@ VOID MY_PLAY_DRAW(VOID)
 	DrawFormatString(
 		GAME_WIDTH - 550,
 		GAME_HEIGHT - 15,
-		GetColor(255, 0, 0), "ライフ: %d ", player_Life);
+		GetColor(0, 255, 0), "ライフ: %d ", player_Life);
+
+	DrawFormatString(
+		GAME_WIDTH - 700,
+		GAME_HEIGHT - 15,
+		GetColor(255, 127, 0), "倒した数: %d ", KnockDown);
 
 
 
@@ -1385,8 +1371,6 @@ VOID MY_END_DRAW(VOID)
 
 		break;
 	}
-
-	DrawString(0, 0, "エンド画面(エスケープキーを押してください。)", GetColor(255, 255, 255));
 
 	return;
 }
@@ -1544,7 +1528,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	//enemy[TAMA_COLOR_RED].image.y = -10;
 	
 	/*テスト用にいじる*/
-	enemy[TAMA_COLOR_RED].image.x = 100;		//左右中央揃え
+	enemy[TAMA_COLOR_RED].image.x = 100;
 	enemy[TAMA_COLOR_RED].image.y = TAMA_COLOR_RED * (-100);
 	
 	EnemyAtariKeisan(&enemy[TAMA_COLOR_RED]);	//当たり判定を計算する関数
@@ -1599,98 +1583,98 @@ BOOL MY_LOAD_IMAGE(VOID)
 	////敵のコピー(敵を増やすときは、この処理をコピーしてネ)
 	int TekiIndex = TAMA_COLOR_YELLOW;
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex*(-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_RED];	//コピー元(赤)
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_GREEN];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_BLUE];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
 	TekiIndex++;
-	enemy[TekiIndex] = enemy[TAMA_COLOR_YELLOW];	//コピー元
-	enemy[TekiIndex].image.x = GAME_WIDTH / 2 - enemy[TekiIndex].image.width / 2;
+	enemy[TekiIndex] = enemy[GetRand(3)];	//コピー元(ランダムで0~3)
+	enemy[TekiIndex].image.x = GetRand(GAME_WIDTH); //0~GAME_WIDTHの中でランダムの位置に配置（x方向）
 	enemy[TekiIndex].image.y = TekiIndex * (-100);
 	EnemyAtariKeisan(&enemy[TekiIndex]);	//当たり判定を計算する関数
 
@@ -1858,14 +1842,23 @@ BOOL(MY_LOAD_MUSIC)(VOID)
 		return FALSE;
 	}
 
-	//プレイヤーダメージ
+	//敵ダメージSE
 	strcpy_s(player.musicMiss.path, MUSIC_PLAYER_MISS_PATH);			//パスの設定
 	player.musicMiss.handle = LoadSoundMem(player.musicMiss.path);		//読み込み
 	if (player.musicMiss.handle == -1)
 	{
+		MessageBox(GetMainWindowHandle(), MUSIC_DAMAGE_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	//プレイヤーダメージ
+	strcpy_s(player.musicDamage.path, MUSIC_DAMAGE_PATH);			//パスの設定
+	player.musicDamage.handle = LoadSoundMem(player.musicDamage.path);		//読み込み
+	if (player.musicDamage.handle == -1)
+	{
 		MessageBox(GetMainWindowHandle(), MUSIC_PLAYER_MISS_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+
 
 	strcpy_s(END_FAIL_BGM.path, MUSIC_END_BGM_PATH);
 	END_FAIL_BGM.handle = LoadSoundMem(END_FAIL_BGM.path);
@@ -1891,6 +1884,7 @@ VOID MY_DELETE_MUSIC(VOID)
 	DeleteSoundMem(PLAY_BGM.handle);
 	DeleteSoundMem(player.musicShot.handle);
 	DeleteSoundMem(player.musicMiss.handle);
+	DeleteSoundMem(player.musicDamage.handle);
 
 	DeleteSoundMem(END_FAIL_BGM.handle);
 	DeleteSoundMem(END_COMP_BGM.handle);
